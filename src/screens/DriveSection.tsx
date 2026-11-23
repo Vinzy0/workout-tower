@@ -1,6 +1,7 @@
 import { CloudArrowUp } from '@phosphor-icons/react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
+import { ask } from '../components/ask'
 import { toast } from '../components/toast'
 import { connectDrive, disconnectDrive, getDriveState, syncNow } from '../sync'
 import { Section } from './Settings'
@@ -31,7 +32,7 @@ export function DriveSection() {
           disabled={busy}
           onClick={() =>
             run(
-              () => connectDrive((t) => confirm(`Drive has newer data (saved ${when(t)}). Restore from Drive?\n\nIt merges, nothing on this phone is deleted.`)),
+              () => connectDrive((t) => ask(`Drive has newer data (saved ${when(t)}). Restore from Drive?\nIt merges, nothing on this phone is deleted.`, 'Restore', false)),
               'Drive connected',
             )
           }

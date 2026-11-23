@@ -59,14 +59,14 @@ async function guarded<T>(fn: () => Promise<T>): Promise<T> {
  * Connect from a tap. If Drive holds newer data, `askRestore` decides:
  * yes = merge Drive into this device, no = this device's data replaces the Drive file.
  */
-export async function connectDrive(askRestore: (remoteUpdatedAt: number) => boolean) {
+export async function connectDrive(askRestore: (remoteUpdatedAt: number) => Promise<boolean>) {
   const token = await auth.getAccessToken() // first thing in the tap, so the popup is allowed
   await setDriveState({ connected: true })
   return guarded(async () => {
     const id = await findFile(token)
     const remote = id ? await download(token, id) : undefined
     const local = await storage.exportAll()
-    if (remote && remote.updatedAt > local.updatedAt && askRestore(remote.updatedAt)) await storage.importMerge(remote)
+    if (remote && remote.updatedAt > local.updatedAt && (await askRestore(remote.updatedAt))) await storage.importMerge(remote)
     await upload(token, id, await storage.exportAll())
   })
 }

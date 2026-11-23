@@ -1,3 +1,4 @@
+import { ask } from '../components/ask'
 import { Check, DotsSixVertical, MagnifyingGlass, Plus, Trash, X } from '@phosphor-icons/react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { motion, Reorder, useDragControls } from 'motion/react'
@@ -38,7 +39,8 @@ export function PresetEditor() {
   const setLib = (open: boolean) => setParams(open ? { add: '1' } : {}, { replace: true })
 
   const remove = async () => {
-    if (!confirm(`Delete "${preset.name}"? Past workouts stay in your history.`)) return
+    if (!(await ask(`Delete "${preset.name}"?
+Past workouts stay in your history.`))) return
     await storage.deletePreset(preset.id)
     nav('/presets', { replace: true })
   }

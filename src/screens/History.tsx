@@ -1,3 +1,4 @@
+import { ask } from '../components/ask'
 import { Trash } from '@phosphor-icons/react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { ExTile } from '../components/ExerciseIcon'
@@ -42,8 +43,9 @@ export function History() {
                 <span className="ml-auto truncate text-sm font-bold text-muted">{presets.find((p) => p.id === s.presetId)?.name}</span>
                 <button
                   aria-label="Delete this workout"
-                  onClick={() => {
-                    if (confirm(`Delete the ${d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })} workout? Your tower and stats update.`))
+                  onClick={async () => {
+                    if (await ask(`Delete the ${d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })} workout?
+Your tower and stats update.`))
                       storage.deleteSession(s.id)
                   }}
                   className="press -my-2 -mr-2 grid h-10 w-10 shrink-0 place-items-center self-center rounded-xl text-muted"

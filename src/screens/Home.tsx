@@ -1,3 +1,4 @@
+import { ask } from '../components/ask'
 import { CaretRight, Check, Flag, List, ShieldCheck } from '@phosphor-icons/react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { AnimatePresence, motion } from 'motion/react'
@@ -42,7 +43,7 @@ export function Home() {
   const lastDone = (presetId: string) => finished.findLast((s) => s.presetId === presetId)?.date
 
   const start = async (presetId: string) => {
-    if (draft && draft.presetId !== presetId && !confirm('Discard your unfinished workout and start this one?')) return
+    if (draft && draft.presetId !== presetId && !(await ask('Discard your unfinished workout and start this one?', 'Discard'))) return
     haptics.tap()
     nav(`/workout/${await startSession(presetId)}`)
   }

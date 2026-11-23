@@ -1,5 +1,6 @@
 import { HashRouter, Route, Routes } from 'react-router'
 import { TabsLayout } from './components/BottomNav'
+import { AskHost } from './components/ask'
 import { Toaster } from './components/toast'
 import { History } from './screens/History'
 import { Home } from './screens/Home'
@@ -30,6 +31,7 @@ export function App() {
         </Routes>
       </div>
       <Toaster />
+      <AskHost />
     </HashRouter>
   )
 }

@@ -1,3 +1,4 @@
+import { ask } from '../components/ask'
 import { CaretLeft, Check, Plus, Trash } from '@phosphor-icons/react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { motion } from 'motion/react'
@@ -54,7 +55,7 @@ export function Workout() {
   }
 
   const discard = async () => {
-    if (!confirm('Discard this workout?')) return
+    if (!(await ask('Discard this workout?', 'Discard'))) return
     await storage.deleteSession(s.id)
     nav('/', { replace: true })
   }
