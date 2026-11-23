@@ -48,10 +48,10 @@ export function Workout() {
 
   const finish = async () => {
     haptics.success()
-    const done = { ...s, finished: true, date: Date.now() }
+    const done = { ...s, finished: true, startedAt: s.date, date: Date.now() }
     await storage.putSession(done)
     syncAfterWorkout() // runs inside this tap so a token refresh is allowed
-    nav('/', { replace: true })
+    nav(`/done/${s.id}`, { replace: true })
   }
 
   const discard = async () => {

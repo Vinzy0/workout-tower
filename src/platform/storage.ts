@@ -5,6 +5,7 @@ import { mergeDumps } from '../core/merge'
 import type { DataDump, Exercise, GoalChange, Preset, Session, Settings } from '../core/types'
 
 type Kv = { id: string; value: unknown }
+type Photo = { id: string; data: string } // id = session id, data = JPEG data URL
 
 class Db extends Dexie {
   exercises!: Table<Exercise, string>
@@ -13,6 +14,8 @@ class Db extends Dexie {
   goals!: Table<GoalChange, string>
   settings!: Table<Settings, string>
   kv!: Table<Kv, string> // device-local state that is never synced (sync status, last-seen tower)
+  photos!: Table<Photo, string> // workout photos, device-only (too big for the Drive JSON)
+  thumbs!: Table<Photo, string> // small square versions for the calendar
 
   constructor() {
     super('workout-tower')
@@ -24,6 +27,7 @@ class Db extends Dexie {
       settings: 'id',
       kv: 'id',
     })
+    this.version(2).stores({ photos: 'id', thumbs: 'id' })
   }
 }
 
@@ -49,8 +53,22 @@ export const storage = {
   listSessions: async () => alive(await db.sessions.orderBy('date').toArray()),
   getSession: (id: string) => db.sessions.get(id),
   putSession: (s: Session) => db.sessions.put({ ...s, updatedAt: now() }),
-  deleteSession: (id: string) => db.sessions.update(id, { deleted: true, updatedAt: now() }),
+  deleteSession: async (id: string) => {
+    await db.sessions.update(id, { deleted: true, updatedAt: now() })
+    await db.photos.delete(id)
+    await db.thumbs.delete(id)
+  },
   getDraft: async () => alive(await db.sessions.toArray()).find((s) => !s.finished),
+
+  // Workout photos (one per session)
+  getPhoto: async (id: string) => (await db.photos.get(id))?.data,
+  listThumbs: async () => new Map((await db.thumbs.toArray()).map((t) => [t.id, t.data])),
+  putPhoto: (id: string, full: string, thumb: string) =>
+    db.transaction('rw', db.photos, db.thumbs, async () => {
+      await db.photos.put({ id, data: full })
+      await db.thumbs.put({ id, data: thumb })
+    }),
+  deletePhoto: (id: string) => Promise.all([db.photos.delete(id), db.thumbs.delete(id)]),
 
   // Weekly goal history
   listGoals: () => db.goals.orderBy('at').toArray(),

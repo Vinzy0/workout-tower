@@ -1,9 +1,11 @@
 import { ask } from '../components/ask'
-import { CaretRight, Check, Flag, List, ShieldCheck } from '@phosphor-icons/react'
+import { Check, Flag, PencilSimple, Plus, ShieldCheck } from '@phosphor-icons/react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type Ref } from "react"
-import { useNavigate } from 'react-router'
+import { Navigate, useNavigate } from 'react-router'
+import { Avatar } from '../components/Avatar'
+import { ExTile } from '../components/ExerciseIcon'
 import { Sheet } from '../components/Sheet'
 import { toast } from '../components/toast'
 import { computeTower, materialFor, MILESTONES, nextMilestone, TIER_START, type Block, type TowerState } from '../core/tower'
@@ -19,9 +21,10 @@ export function Home() {
   const sessions = useLiveQuery(storage.listSessions)
   const goals = useLiveQuery(storage.listGoals)
   const presets = useLiveQuery(storage.listPresets)
+  const exercises = useLiveQuery(storage.listExercises)
   const drive = useLiveQuery(getDriveState)
   const [startOpen, setStartOpen] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
+  const settings = useLiveQuery(storage.getSettings)
   // An installed PWA resumes from memory, so refresh "now" when it comes back (week rollover).
   const [now, setNow] = useState(Date.now)
   useEffect(() => {
@@ -38,7 +41,9 @@ export function Home() {
   )
   const fx = useTowerFx(tower)
 
-  if (!tower || !goals || !presets) return null
+  if (!tower || !goals || !presets || !exercises) return null
+  if (goals.length === 0) return <Navigate to="/welcome" replace />
+  const exById = new Map(exercises.map((e) => [e.id, e]))
   const { height, shields, cracked, week } = tower
   const lastDone = (presetId: string) => finished.findLast((s) => s.presetId === presetId)?.date
 
@@ -65,8 +70,8 @@ export function Home() {
             <ShieldCheck size={20} weight={shields ? 'fill' : 'regular'} className={shields ? 'text-people' : 'text-faint'} />
             <span className="tabular font-display font-black">{shields}</span>
           </div>
-          <button aria-label="Menu" onClick={() => setMenuOpen(true)} className="press row grid h-11 w-11 place-items-center">
-            <List size={20} />
+          <button aria-label="Profile and settings" onClick={() => nav('/profile')} className="press">
+            <Avatar profile={settings?.profile} size={40} />
           </button>
         </div>
         <WeekCard week={week} />
@@ -96,86 +101,52 @@ export function Home() {
       </div>
 
       <Sheet open={startOpen} onClose={() => setStartOpen(false)} title="Start workout">
-        <div className="min-h-0 space-y-1.5 overflow-y-auto pb-2">
+        <div className="stagger min-h-0 space-y-2 overflow-y-auto pb-2">
           {draft && (
             <button onClick={() => nav(`/workout/${draft.id}`)} className="chunky w-full rounded-[18px] bg-attention [--lip:#d9be55] p-4 text-left text-on-pastel">
-              <div className="font-display text-lg font-medium">Resume {presets.find((p) => p.id === draft.presetId)?.name ?? 'workout'}</div>
-              <div className="text-sm opacity-80">
+              <div className="font-display text-lg font-black">Resume {presets.find((p) => p.id === draft.presetId)?.name ?? 'workout'}</div>
+              <div className="text-sm font-semibold opacity-80">
                 {draft.entries.filter((e) => e.done).length} of {draft.entries.length} exercises done
               </div>
             </button>
           )}
-          {presets.length === 0 ? (
-            <button
-              onClick={async () => nav(`/presets/${(await createPreset()).id}?add=1`)}
-              className="chunky w-full rounded-[18px] bg-attention [--lip:#d9be55] p-5 text-left text-on-pastel"
-            >
-              <div className="font-display text-lg font-medium">Create your first workout</div>
-              <div className="text-sm opacity-80">Pick exercises from the library. Under a minute.</div>
-            </button>
-          ) : (
-            presets.map((p) => {
-              const t = lastDone(p.id)
-              return (
-                <button key={p.id} onClick={() => start(p.id)} className="row press flex w-full items-center gap-3 px-4 py-4 text-left">
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-base font-extrabold">{p.name}</div>
-                    <div className="text-xs text-muted">
-                      {p.exerciseIds.length} exercises · {t ? `last done ${daysAgo(t)}` : 'never done'}
-                    </div>
+          {presets.map((p) => {
+            const t = lastDone(p.id)
+            const names = p.exerciseIds.map((id) => exById.get(id)?.name).filter(Boolean)
+            return (
+              <div key={p.id} className="row flex items-stretch">
+                <button onClick={() => start(p.id)} className="press min-w-0 flex-1 p-4 text-left">
+                  <div className="truncate text-lg font-black">{p.name}</div>
+                  <div className="mt-0.5 truncate text-[13px] font-semibold text-muted">{names.join(' · ') || 'No exercises yet'}</div>
+                  <div className="mt-2.5 flex items-center gap-1.5">
+                    {p.exerciseIds.slice(0, 6).map((id) => (
+                      <ExTile key={id} id={id} ex={exById.get(id)} size={30} />
+                    ))}
+                    <span className="ml-auto pl-2 text-xs font-bold whitespace-nowrap text-muted">{t ? daysAgo(t) : 'never done'}</span>
                   </div>
-                  <CaretRight className="text-muted" />
                 </button>
-              )
-            })
-          )}
-        </div>
-        {presets.length > 0 && (
-          <button onClick={() => nav('/presets')} className="h-12 text-sm text-muted underline underline-offset-[3px]">
-            Edit workouts
-          </button>
-        )}
-      </Sheet>
-
-      <Sheet open={menuOpen} onClose={() => setMenuOpen(false)}>
-        <div className="space-y-1.5 pb-2">
-          {[
-            ['Workouts', '/presets'],
-            ['Past towers', '/past'],
-            ['Settings', '/settings'],
-          ].map(([label, to]) => (
-            <button key={to} onClick={() => nav(to)} className="row press flex w-full items-center px-4 py-4 text-left">
-              <span className="flex-1">{label}</span>
-              <CaretRight className="text-muted" />
-            </button>
-          ))}
-        </div>
-      </Sheet>
-
-      <GoalPicker open={goals.length === 0} />
-    </div>
-  )
-}
-
-function GoalPicker({ open }: { open: boolean }) {
-  return (
-    <Sheet open={open} onClose={() => storage.setGoal(2)} title="How many workouts a week?">
-      <p className="-mt-2 mb-4 text-sm text-muted">Hit it each week to stack a block. You can change it in settings.</p>
-      <div className="grid grid-cols-7 gap-1.5 pb-2">
-        {[1, 2, 3, 4, 5, 6, 7].map((n) => (
+                <button aria-label={`Edit ${p.name}`} onClick={() => nav(`/presets/${p.id}`)} className="press grid w-12 shrink-0 place-items-center text-muted">
+                  <PencilSimple size={20} />
+                </button>
+              </div>
+            )
+          })}
           <button
-            key={n}
-            onClick={() => {
-              haptics.tap()
-              storage.setGoal(n)
-            }}
-            className={`press tabular h-16 rounded-xl font-display text-xl font-medium ${n === 2 ? 'bg-text text-bg' : 'bg-surface'}`}
+            onClick={async () => nav(`/presets/${(await createPreset()).id}?add=1`)}
+            className={`press flex w-full items-center gap-3 rounded-[18px] p-4 text-left ${
+              presets.length ? 'border-2 border-dashed border-white/15 text-muted' : 'chunky bg-attention [--lip:#d9be55] text-on-pastel'
+            }`}
           >
-            {n}
+            <Plus size={22} weight="bold" />
+            <span>
+              <span className="block font-display text-lg font-black">{presets.length ? 'New workout' : 'Create your first workout'}</span>
+              <span className="block text-sm font-semibold opacity-80">Pick exercises from the library. Under a minute.</span>
+            </span>
           </button>
-        ))}
-      </div>
-    </Sheet>
+        </div>
+      </Sheet>
+
+    </div>
   )
 }
 

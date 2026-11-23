@@ -1,6 +1,6 @@
-// Generates the PWA PNG icons (stacked tower blocks) with no image deps.
-// Run: node scripts/make-icons.mjs
-import { writeFileSync } from 'node:fs'
+// Generates the PWA icons, plus Android launcher icons and splash screens, with no image deps.
+// Run: node scripts/make-icons.mjs   (after `npx cap add android` to also write the Android ones)
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { deflateSync } from 'node:zlib'
 
 const BG = [13, 13, 15]
@@ -41,32 +41,35 @@ function inRoundRect(x, y, rx, ry, w, h, r) {
   return (x - cx) ** 2 + (y - cy) ** 2 <= r * r
 }
 
-function render(size, maskable) {
-  const px = Buffer.alloc(size * size * 3)
-  const pad = maskable ? 0.24 : 0.14
-  const inner = size * (1 - pad * 2)
-  const slabH = inner / 3.6
+/** Draws the tower centered in a W×H PNG; `box` is the size of the square it fits in. */
+function render(W, H = W, box = Math.min(W, H) * 0.72) {
+  W = Math.round(W)
+  H = Math.round(H)
+  const px = Buffer.alloc(W * H * 3)
+  const ox = (W - box) / 2
+  const oy = (H - box) / 2
+  const slabH = box / 3.6
   const gap = slabH * 0.18
   const depth = slabH * 0.22
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
       let col = BG
       BLOCKS.forEach((b, i) => {
-        const w = inner * (1 - i * 0.12)
-        const rx = (size - w) / 2
-        const ry = size * pad + inner - (i + 1) * (slabH + gap) + gap
+        const w = box * (1 - i * 0.12)
+        const rx = ox + (box - w) / 2
+        const ry = oy + box - (i + 1) * (slabH + gap) + gap
         const r = slabH * 0.28
         if (inRoundRect(x, y, rx, ry + depth, w, slabH - depth, r)) col = b.shade
         if (inRoundRect(x, y, rx, ry, w, slabH - depth, r)) col = b.color
       })
-      px.set(col, (y * size + x) * 3)
+      px.set(col, (y * W + x) * 3)
     }
   }
-  const raw = Buffer.alloc(size * (size * 3 + 1))
-  for (let y = 0; y < size; y++) px.copy(raw, y * (size * 3 + 1) + 1, y * size * 3, (y + 1) * size * 3)
+  const raw = Buffer.alloc(H * (W * 3 + 1))
+  for (let y = 0; y < H; y++) px.copy(raw, y * (W * 3 + 1) + 1, y * W * 3, (y + 1) * W * 3)
   const ihdr = Buffer.alloc(13)
-  ihdr.writeUInt32BE(size, 0)
-  ihdr.writeUInt32BE(size, 4)
+  ihdr.writeUInt32BE(W, 0)
+  ihdr.writeUInt32BE(H, 4)
   ihdr[8] = 8
   ihdr[9] = 2
   return Buffer.concat([
@@ -77,8 +80,34 @@ function render(size, maskable) {
   ])
 }
 
-writeFileSync('public/pwa-192.png', render(192, false))
-writeFileSync('public/pwa-512.png', render(512, false))
-writeFileSync('public/pwa-maskable-512.png', render(512, true))
-writeFileSync('public/apple-touch-icon.png', render(180, false))
+const icon = (size, maskable = false) => render(size, size, size * (maskable ? 0.52 : 0.72))
+
+writeFileSync('public/pwa-192.png', icon(192))
+writeFileSync('public/pwa-512.png', icon(512))
+writeFileSync('public/pwa-maskable-512.png', icon(512, true))
+writeFileSync('public/apple-touch-icon.png', icon(180))
+
+const RES = 'android/app/src/main/res'
+if (existsSync(RES)) {
+  const dpi = { mdpi: 1, hdpi: 1.5, xhdpi: 2, xxhdpi: 3, xxxhdpi: 4 }
+  for (const [d, k] of Object.entries(dpi)) {
+    writeFileSync(`${RES}/mipmap-${d}/ic_launcher.png`, icon(48 * k))
+    writeFileSync(`${RES}/mipmap-${d}/ic_launcher_round.png`, icon(48 * k, true))
+    // Adaptive icon foreground: launchers crop to the middle ~66%, so keep the tower small.
+    writeFileSync(`${RES}/mipmap-${d}/ic_launcher_foreground.png`, render(108 * k, 108 * k, 108 * k * 0.42))
+  }
+  // Splash screens keep their sizes; redraw them dark with the tower in the middle.
+  for (const dir of readdirSync(RES).filter((n) => n.startsWith('drawable'))) {
+    const p = `${RES}/${dir}/splash.png`
+    if (!existsSync(p)) continue
+    const b = readFileSync(p)
+    const W = b.readUInt32BE(16)
+    const H = b.readUInt32BE(20)
+    writeFileSync(p, render(W, H, Math.min(W, H) * 0.3))
+  }
+  writeFileSync(
+    `${RES}/values/ic_launcher_background.xml`,
+    '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">#0D0D0F</color>\n</resources>\n',
+  )
+}
 console.log('icons written')

@@ -2,6 +2,8 @@
 // Native: Google blocks OAuth in WebViews (disallowed_useragent), so swap this file for a native
 // Google sign-in plugin that returns an access token with the same scope. See NATIVE_MIGRATION.md.
 
+import { Capacitor } from '@capacitor/core'
+
 export const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata'
 
 export interface Auth {
@@ -76,7 +78,8 @@ function getClient(g: Gis): TokenClient {
 if (CLIENT_ID) load().catch(() => {})
 
 export const auth: Auth = {
-  available: !!CLIENT_ID,
+  // The web token popup can't run inside the Android WebView (Google blocks it). See NATIVE_MIGRATION.md.
+  available: !!CLIENT_ID && !Capacitor.isNativePlatform(),
 
   getAccessToken() {
     if (token && token.expiresAt > Date.now()) return Promise.resolve(token.value)

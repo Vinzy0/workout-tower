@@ -8,7 +8,7 @@ import { Sheet } from '../components/Sheet'
 import { Segmented, TopBar } from '../components/ui'
 import { ExTile } from '../components/ExerciseIcon'
 import { ValueCard } from '../components/ValueCard'
-import { LIBRARY } from '../core/library'
+import { descOf, LIBRARY } from '../core/library'
 import { EQUIPMENT, STEP_SIZES, type Equipment, type Exercise, type Preset, type Unit } from '../core/types'
 import { equipmentOf, fmtNum, fmtWeight, REPS, toDisplay, toKg, weightLabel, weightValues } from '../core/units'
 import { addToPreset, createCustomExercise, startSession } from '../data'
@@ -28,7 +28,7 @@ export function PresetEditor() {
 
   useEffect(() => {
     if (preset) setOrder(preset.exerciseIds)
-    if (preset === null || preset?.deleted) nav('/presets', { replace: true })
+    if (preset === null || preset?.deleted) nav('/profile', { replace: true })
   }, [preset, nav])
 
   if (!preset || preset.deleted || !exercises) return null
@@ -42,7 +42,7 @@ export function PresetEditor() {
     if (!(await ask(`Delete "${preset.name}"?
 Past workouts stay in your history.`))) return
     await storage.deletePreset(preset.id)
-    nav('/presets', { replace: true })
+    nav('/profile', { replace: true })
   }
 
   const start = async () => {
@@ -53,7 +53,7 @@ Past workouts stay in your history.`))) return
   return (
     <div className="flex h-full flex-col">
       <TopBar
-        back="/presets"
+        back="/"
         title={
           <input
             value={name ?? preset.name}
@@ -296,22 +296,27 @@ function LibrarySheet({
                           key={i.id}
                           disabled={added}
                           onClick={() => toggle(i.id)}
-                          className={`row press flex w-full items-center gap-3 px-3 py-2.5 text-left ${added ? 'opacity-40' : ''}`}
+                          className={`row press flex w-full items-center gap-3 px-3 py-3.5 text-left transition-colors ${added ? 'opacity-40' : ''} ${on ? 'bg-surface-hover' : ''}`}
                         >
-                          <ExTile id={i.id} ex={i} size={36} />
-                          <span className="flex-1">
-                            {i.name}
-                            {equipmentOf(i) !== 'dumbbell' && <span className="ml-2 text-xs text-muted">{equipmentOf(i)}</span>}
+                          <ExTile id={i.id} ex={i} size={48} />
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-[17px] font-extrabold leading-tight">
+                              {i.name}
+                              {equipmentOf(i) !== 'dumbbell' && <span className="ml-2 text-xs font-bold text-muted">{equipmentOf(i)}</span>}
+                            </span>
+                            <span className="mt-0.5 block text-[13px] leading-snug font-semibold text-muted">
+                              {descOf(i.id) ?? (i.group === 'Custom' ? 'Your custom exercise' : '')}
+                            </span>
                           </span>
                           {added ? (
                             <span className="text-xs text-muted">Added</span>
                           ) : (
                             <span
-                              className={`grid h-6 w-6 place-items-center rounded-full transition-all duration-200 ${
+                              className={`grid h-8 w-8 shrink-0 place-items-center rounded-full transition-all duration-200 ${
                                 on ? 'scale-110 bg-healthy text-on-pastel' : 'bg-surface-hover'
                               }`}
                             >
-                              {on && <Check size={14} weight="bold" />}
+                              {on && <Check size={18} weight="bold" />}
                             </span>
                           )}
                         </button>

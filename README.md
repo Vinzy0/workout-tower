@@ -2,6 +2,8 @@
 
 Live: https://vinzy0.github.io/workout-tower/
 
+Android app: https://github.com/Vinzy0/workout-tower/releases/download/apk/Tower.apk (rebuilt on every push)
+
 A PWA for logging home-gym workouts with scroll wheels (no typing) and a streak "tower":
 one block per week you hit your goal.
 

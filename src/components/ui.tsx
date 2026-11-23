@@ -6,7 +6,7 @@ export function TopBar({ title, back = '/', right }: { title?: ReactNode; back?:
   const nav = useNavigate()
   return (
     <header className="safe-top flex items-center gap-2 px-[10px] pb-2">
-      <button aria-label="Back" onClick={() => nav(back)} className="press grid h-11 w-11 place-items-center rounded-xl">
+      <button aria-label="Back" onClick={() => ((window.history.state?.idx ?? 0) > 0 ? nav(-1) : nav(back))} className="press grid h-11 w-11 place-items-center rounded-xl">
         <CaretLeft size={22} />
       </button>
       <div className="min-w-0 flex-1 truncate font-display text-xl font-black">{title}</div>

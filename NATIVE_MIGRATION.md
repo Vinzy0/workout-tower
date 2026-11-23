@@ -1,9 +1,19 @@
 # Going native (Android) with Capacitor
 
+> **Status (v1): done.** The `android/` project exists and `.github/workflows/android.yml` builds a
+> debug APK on every push to `main`, published at
+> https://github.com/Vinzy0/workout-tower/releases/download/apk/Tower.apk
+>
+> Already native: haptics (`@capacitor/haptics`), camera (`@capacitor/camera`), Android back
+> button (`@capacitor/app`), launcher icons + splash (`node scripts/make-icons.mjs`), no service
+> worker inside the app (`src/platform/native.ts`). **Still web-only:** Google Drive sync is hidden
+> in the APK until `auth.ts` gets a native sign-in (section 3). `share.ts` still uses a download link.
+> For a Play Store release you would also need a signed release build (keystore) instead of debug.
+
 The app is a pure static client: no server code, HashRouter, `dist/` output, and every platform
 API lives behind `src/platform/`. Core code never touches `navigator.vibrate`, `window.google`, etc.
 
-## 1. Add Capacitor
+## 1. Add Capacitor (already done; kept for reference)
 
 ```powershell
 npm i @capacitor/core

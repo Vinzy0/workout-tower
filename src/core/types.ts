@@ -37,6 +37,7 @@ export type Session = {
   id: string
   presetId: string
   date: number // started at, then finished at (ms)
+  startedAt?: number // set when finished
   finished: boolean
   entries: Entry[]
   updatedAt: number
@@ -47,7 +48,9 @@ export type GoalChange = { id: string; goal: number; at: number; updatedAt: numb
 
 export type Unit = 'kg' | 'lb'
 
-export type Settings = { id: 'settings'; unit: Unit; updatedAt: number }
+export type Profile = { name?: string; bio?: string; avatar?: string } // avatar: small JPEG data URL
+
+export type Settings = { id: 'settings'; unit: Unit; sound?: boolean; profile?: Profile; updatedAt: number }
 
 export type DataDump = {
   app: 'workout-tower'
