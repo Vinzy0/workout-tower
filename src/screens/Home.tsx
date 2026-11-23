@@ -21,12 +21,19 @@ export function Home() {
   const drive = useLiveQuery(getDriveState)
   const [startOpen, setStartOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  // An installed PWA resumes from memory, so refresh "now" when it comes back (week rollover).
+  const [now, setNow] = useState(Date.now)
+  useEffect(() => {
+    const wake = () => document.visibilityState === 'visible' && setNow(Date.now())
+    document.addEventListener('visibilitychange', wake)
+    return () => document.removeEventListener('visibilitychange', wake)
+  }, [])
 
   const finished = useMemo(() => sessions?.filter((s) => s.finished) ?? [], [sessions])
   const draft = sessions?.find((s) => !s.finished)
   const tower = useMemo(
-    () => (sessions && goals ? computeTower(finished.map((s) => s.date), goals, Date.now()) : null),
-    [sessions, goals, finished],
+    () => (sessions && goals ? computeTower(finished.map((s) => s.date), goals, now) : null),
+    [sessions, goals, finished, now],
   )
   const fx = useTowerFx(tower)
 
@@ -35,6 +42,7 @@ export function Home() {
   const lastDone = (presetId: string) => finished.findLast((s) => s.presetId === presetId)?.date
 
   const start = async (presetId: string) => {
+    if (draft && draft.presetId !== presetId && !confirm('Discard your unfinished workout and start this one?')) return
     haptics.tap()
     nav(`/workout/${await startSession(presetId)}`)
   }

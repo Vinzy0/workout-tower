@@ -49,7 +49,7 @@ export function Workout() {
     const done = { ...s, finished: true, date: Date.now() }
     await storage.putSession(done)
     syncAfterWorkout() // runs inside this tap so a token refresh is allowed
-    nav('/', { replace: true, state: { finished: true } })
+    nav('/', { replace: true })
   }
 
   const discard = async () => {
@@ -146,7 +146,7 @@ function ExercisePicker({
   useEffect(() => {
     const i = entries.findIndex((e) => e.exerciseId === selected)
     if (i >= 0) ref.current?.scrollTo({ top: i * ITEM, behavior: 'smooth' })
-  }, [selected, entries])
+  }, [selected, entries.length]) // not on every set change, or the list jumps back while you scroll it
 
   return (
     <div className="relative min-h-0">
