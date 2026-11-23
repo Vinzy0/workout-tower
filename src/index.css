@@ -86,6 +86,8 @@ button { cursor: pointer; }
 /* Wheel picker */
 .wheel { overflow-y: scroll; scroll-snap-type: y mandatory; overscroll-behavior: contain; touch-action: pan-y; }
 .wheel > * { scroll-snap-align: center; }
+.wheel-x { overflow-x: scroll; scroll-snap-type: x mandatory; overscroll-behavior: contain; touch-action: pan-x; }
+.wheel-x > * { scroll-snap-align: center; }
 
 /* ---------- Tower materials (game art, not UI chrome: see DESIGN.md note in README) ---------- */
 .slab {

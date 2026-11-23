@@ -5,6 +5,7 @@ import { setSoundEnabled } from './platform/sound'
 import { storage } from './platform/storage'
 import { TabsLayout } from './components/BottomNav'
 import { AskHost } from './components/ask'
+import { CropHost } from './components/crop'
 import { Toaster } from './components/toast'
 import { History } from './screens/History'
 import { Home } from './screens/Home'
@@ -41,6 +42,7 @@ export function App() {
       </div>
       <Toaster />
       <AskHost />
+      <CropHost />
     </HashRouter>
   )
 }

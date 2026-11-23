@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Avatar } from '../components/Avatar'
+import { crop } from '../components/crop'
 import { ExTile } from '../components/ExerciseIcon'
 import { TopBar } from '../components/ui'
 import { liftHistory, performed } from '../core/stats'
@@ -44,7 +45,8 @@ export function Profile() {
 
   const changePhoto = async () => {
     const raw = await pickPhoto('library')
-    if (raw) save({ ...profile, avatar: await resize(raw, 256, true) })
+    const cropped = raw && (await crop(await resize(raw, 1600)))
+    if (cropped) save({ ...profile, avatar: cropped })
   }
 
   const stats: [string, string][] = [

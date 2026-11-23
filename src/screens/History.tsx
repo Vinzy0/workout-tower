@@ -1,6 +1,7 @@
 import { Camera, CaretLeft, CaretRight, Check, Trash } from '@phosphor-icons/react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo, useState } from 'react'
+import { autoBackup } from '../backup'
 import { ask } from '../components/ask'
 import { ExTile } from '../components/ExerciseIcon'
 import { Sheet } from '../components/Sheet'
@@ -28,6 +29,7 @@ async function addPhoto(sessionId: string) {
   if (!raw) return
   const [full, thumb] = await Promise.all([resize(raw, 1280), resize(raw, 240, true)])
   await storage.putPhoto(sessionId, full, thumb)
+  autoBackup()
 }
 
 export function History() {
@@ -230,7 +232,7 @@ function SessionCard({
           aria-label="Delete this workout"
           onClick={async () => {
             if (await ask(`Delete the ${d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })} workout?\nYour tower and stats update.`))
-              storage.deleteSession(s.id)
+              storage.deleteSession(s.id).then(autoBackup)
           }}
           className="press -mr-2 grid h-10 w-10 shrink-0 place-items-center rounded-xl text-muted"
         >

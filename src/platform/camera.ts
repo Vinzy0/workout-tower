@@ -10,6 +10,7 @@ export async function pickPhoto(from: 'camera' | 'library'): Promise<string | nu
         resultType: CameraResultType.DataUrl,
         source: from === 'camera' ? CameraSource.Camera : CameraSource.Photos,
         quality: 85,
+        saveToGallery: from === 'camera', // your gym pics also land in the phone's gallery
         width: 1600,
       })
       return p.dataUrl ?? null

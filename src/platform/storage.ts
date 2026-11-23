@@ -69,6 +69,14 @@ export const storage = {
       await db.thumbs.put({ id, data: thumb })
     }),
   deletePhoto: (id: string) => Promise.all([db.photos.delete(id), db.thumbs.delete(id)]),
+  listPhotos: () => db.photos.toArray(),
+  hasPhoto: async (id: string) => !!(await db.thumbs.get(id)),
+
+  /** Deletes the whole local database (workouts, photos, profile, everything). */
+  wipeAll: async () => {
+    db.close()
+    await Dexie.delete('workout-tower')
+  },
 
   // Weekly goal history
   listGoals: () => db.goals.orderBy('at').toArray(),

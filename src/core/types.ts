@@ -50,7 +50,9 @@ export type Unit = 'kg' | 'lb'
 
 export type Profile = { name?: string; bio?: string; avatar?: string } // avatar: small JPEG data URL
 
-export type Settings = { id: 'settings'; unit: Unit; sound?: boolean; profile?: Profile; updatedAt: number }
+export type Picker = 'bottom' | 'side' // where the workout screen's exercise list sits
+
+export type Settings = { id: 'settings'; unit: Unit; sound?: boolean; picker?: Picker; profile?: Profile; updatedAt: number }
 
 export type DataDump = {
   app: 'workout-tower'

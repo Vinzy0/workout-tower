@@ -21,7 +21,9 @@ export function Workout() {
   const stored = useLiveQuery(async () => (await storage.getSession(id)) ?? null, [id])
   const exercises = useLiveQuery(storage.listExercises)
   const history = useLiveQuery(storage.listSessions)
-  const unit = useLiveQuery(storage.getSettings)?.unit ?? 'kg'
+  const settings = useLiveQuery(storage.getSettings)
+  const unit = settings?.unit ?? 'kg'
+  const picker = settings?.picker
   const presetName = useLiveQuery(async () => (stored ? (await storage.getPreset(stored.presetId))?.name : undefined), [stored?.presetId])
   const [s, setS] = useState<Session | null>(null)
   const [sel, setSel] = useState<string | null>(null)
@@ -63,6 +65,35 @@ export function Workout() {
   const entry = s.entries.find((e) => e.exerciseId === sel)
   const ex = sel ? byId.get(sel) : undefined
   const pct = s.entries.length ? (doneCount / s.entries.length) * 100 : 0
+  const bottom = picker !== 'side'
+  const pick = (id: string) => {
+    haptics.tap()
+    setSel(id)
+  }
+
+  const editor =
+    entry && ex ? (
+      <SetEditor
+        key={ex.id}
+        ex={ex}
+        entry={entry}
+        unit={unit}
+        history={history}
+        onChange={(fn) => updateEntry(ex.id, fn)}
+        onDone={(done) => {
+          updateEntry(ex.id, (e) => ({ ...e, done }))
+          if (done) {
+            haptics.success()
+            const next = s.entries.find((e) => !e.done && e.exerciseId !== ex.id)
+            if (next) setTimeout(() => setSel(next.exerciseId), 350)
+          }
+        }}
+      />
+    ) : (
+      <div className="grid h-full place-items-center px-4 text-center font-bold text-muted">
+        {bottom ? 'Tap an exercise below to log it' : 'Tap an exercise to log it'}
+      </div>
+    )
 
   return (
     <div className="flex h-full flex-col">
@@ -84,39 +115,17 @@ export function Workout() {
         </div>
       </header>
 
-      <div className="flex min-h-0 flex-1 pt-2">
-        <ExercisePicker
-          entries={s.entries}
-          byId={byId}
-          selected={sel}
-          onSelect={(id) => {
-            haptics.tap()
-            setSel(id)
-          }}
-        />
-        <div className="min-h-0 min-w-0 flex-1 overflow-y-auto pl-1 pr-4">
-          {entry && ex ? (
-            <SetEditor
-              key={ex.id}
-              ex={ex}
-              entry={entry}
-              unit={unit}
-              history={history}
-              onChange={(fn) => updateEntry(ex.id, fn)}
-              onDone={(done) => {
-                updateEntry(ex.id, (e) => ({ ...e, done }))
-                if (done) {
-                  haptics.success()
-                  const next = s.entries.find((e) => !e.done && e.exerciseId !== ex.id)
-                  if (next) setTimeout(() => setSel(next.exerciseId), 350)
-                }
-              }}
-            />
-          ) : (
-            <div className="grid h-full place-items-center px-4 text-center font-bold text-muted">Tap an exercise to log it</div>
-          )}
+      {bottom ? (
+        <>
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-2">{editor}</div>
+          <ExercisePicker axis="x" entries={s.entries} byId={byId} selected={sel} onSelect={pick} />
+        </>
+      ) : (
+        <div className="flex min-h-0 flex-1 pt-2">
+          <ExercisePicker axis="y" entries={s.entries} byId={byId} selected={sel} onSelect={pick} />
+          <div className="min-h-0 min-w-0 flex-1 overflow-y-auto pr-4 pl-1">{editor}</div>
         </div>
-      </div>
+      )}
 
       <div className="safe-bottom px-[18px] pt-2">
         <button onClick={finish} className="btn-primary chunky h-14 w-full text-base">
@@ -136,33 +145,56 @@ export function Workout() {
   )
 }
 
+/**
+ * Exercise tiles as a snap-scrolling strip. axis "y" = column on the left,
+ * axis "x" = strip along the bottom (thumb zone) with a ▼ over the selected one.
+ */
 function ExercisePicker({
+  axis,
   entries,
   byId,
   selected,
   onSelect,
 }: {
+  axis: 'x' | 'y'
   entries: Entry[]
   byId: Map<string, Exercise>
   selected: string | null
   onSelect: (id: string) => void
 }) {
   const ref = useRef<HTMLDivElement>(null)
-  const ITEM = 104
+  const x = axis === 'x'
+  const ITEM = x ? 92 : 104
 
   useEffect(() => {
     const i = entries.findIndex((e) => e.exerciseId === selected)
-    if (i >= 0) ref.current?.scrollTo({ top: i * ITEM, behavior: 'smooth' })
-  }, [selected, entries.length]) // not on every set change, or the list jumps back while you scroll it
+    if (i >= 0) ref.current?.scrollTo(x ? { left: i * ITEM, behavior: 'smooth' } : { top: i * ITEM, behavior: 'smooth' })
+  }, [selected, entries.length, x, ITEM]) // not on every set change, or the list jumps back while you scroll it
 
+  const spacer = (
+    <div
+      className="shrink-0"
+      style={x ? { width: `calc(50% - ${ITEM / 2}px)`, scrollSnapAlign: 'none' } : { height: `calc(50% - ${ITEM / 2}px)`, scrollSnapAlign: 'none' }}
+    />
+  )
   return (
-    <div className="relative min-h-0 w-[104px] shrink-0">
+    <div className={x ? 'relative shrink-0 pt-3' : 'relative min-h-0 w-[104px] shrink-0'}>
+      {x && (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute top-0 left-1/2 z-10 h-0 w-0 -translate-x-1/2 border-x-[9px] border-t-[11px] border-x-transparent border-t-text"
+        />
+      )}
       <div
         ref={ref}
-        className="wheel no-scrollbar flex h-full flex-col"
-        style={{ maskImage: 'linear-gradient(transparent, #000 22%, #000 78%, transparent)' }}
+        className={`no-scrollbar flex ${x ? 'wheel-x flex-row' : 'wheel h-full flex-col'}`}
+        style={{
+          maskImage: x
+            ? 'linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent)'
+            : 'linear-gradient(transparent, #000 22%, #000 78%, transparent)',
+        }}
       >
-        <div className="shrink-0" style={{ height: `calc(50% - ${ITEM / 2}px)`, scrollSnapAlign: 'none' }} />
+        {spacer}
         {entries.map((e) => {
           const ex = byId.get(e.exerciseId)
           const on = e.exerciseId === selected
@@ -171,7 +203,7 @@ function ExercisePicker({
               key={e.exerciseId}
               onClick={() => onSelect(e.exerciseId)}
               className="no-select flex shrink-0 flex-col items-center justify-center gap-1.5"
-              style={{ height: ITEM }}
+              style={x ? { width: ITEM, height: 108 } : { height: ITEM }}
             >
               <span
                 className={`relative grid h-16 w-16 place-items-center rounded-[20px] text-3xl transition-all duration-200 ${
@@ -195,18 +227,21 @@ function ExercisePicker({
                   </motion.span>
                 )}
               </span>
-              <span className={`line-clamp-2 w-24 text-center text-[11px] leading-tight font-extrabold ${on ? 'text-text' : 'text-muted'}`}>
+              <span
+                className={`line-clamp-2 text-center text-[11px] leading-tight font-extrabold ${on ? 'text-text' : 'text-muted'}`}
+                style={{ width: ITEM - 6 }}
+              >
                 {ex?.name ?? 'Deleted'}
               </span>
             </button>
           )
         })}
-        <div className="shrink-0" style={{ height: `calc(50% - ${ITEM / 2}px)`, scrollSnapAlign: 'none' }} />
+        {spacer}
       </div>
     </div>
   )
-}
 
+}
 
 /** One set at a time: the active set gets the big cards, earlier sets sit above as chips you can tap. */
 function SetEditor({

@@ -3,15 +3,21 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { AnimatePresence, motion } from 'motion/react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
+import { restoreFromText } from '../backup'
 import { Avatar } from '../components/Avatar'
+import { crop } from '../components/crop'
+import { toast } from '../components/toast'
+import { share } from '../platform/share'
+import { PickerChoice } from '../components/PickerChoice'
 import { ValueCard } from '../components/ValueCard'
+import type { Picker } from '../core/types'
 import { fmtNum, weightValues } from '../core/units'
 import { createPreset } from '../data'
 import { pickPhoto, resize } from '../platform/camera'
 import { haptics } from '../platform/haptics'
 import { storage } from '../platform/storage'
 
-const STEPS = 5
+const STEPS = 6
 
 /** First launch: what the tower is, weekly goal, name, a practice number, first workout. */
 export function Onboarding() {
@@ -22,12 +28,26 @@ export function Onboarding() {
   const [name, setName] = useState('')
   const [avatar, setAvatar] = useState<string>()
   const [demo, setDemo] = useState(10)
+  const [picker, setPicker] = useState<Picker>('bottom')
 
   const next = async () => {
     haptics.tap()
     if (step === 1) await storage.setGoal(goal)
     if (step === 2 && settings) await storage.putSettings({ ...settings, profile: { ...settings.profile, name: name.trim(), avatar } })
+    if (step === 4) await storage.putSettings({ ...(await storage.getSettings()), picker })
     setStep((s) => s + 1)
+  }
+
+  const restore = async () => {
+    const text = await share.pickTextFile()
+    if (!text) return
+    try {
+      const r = await restoreFromText(text)
+      toast(`Welcome back. Restored ${r.sessions} workouts and ${r.photos} photos.`, 3500)
+      nav('/', { replace: true })
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Could not read that file')
+    }
   }
 
   const screens = [
@@ -68,7 +88,8 @@ export function Onboarding() {
           <button
             onClick={async () => {
               const raw = await pickPhoto('library')
-              if (raw) setAvatar(await resize(raw, 256, true))
+              const cropped = raw && (await crop(await resize(raw, 1600)))
+              if (cropped) setAvatar(cropped)
             }}
             className="press"
             aria-label="Pick a profile photo"
@@ -96,6 +117,12 @@ export function Onboarding() {
         </div>
       ),
       cta: 'Continue',
+    },
+    {
+      title: 'Where should your exercises go?',
+      body: 'Pick the layout for logging. You can switch it later in your profile.',
+      content: <PickerChoice value={picker} onChange={setPicker} />,
+      cta: picker === 'bottom' ? 'Bottom it is' : 'Side it is',
     },
     {
       title: 'Make your first workout',
@@ -145,6 +172,11 @@ export function Onboarding() {
       <button onClick={() => (step === STEPS - 1 ? finish(true) : next())} className="btn-primary chunky h-14 w-full text-lg">
         {sc.cta}
       </button>
+      {step === 0 && (
+        <button onClick={restore} className="h-10 text-sm font-bold text-muted">
+          Reinstalling? Restore from a backup
+        </button>
+      )}
       {step === STEPS - 1 && (
         <button onClick={() => finish(false)} className="h-10 text-sm font-bold text-muted">
           Later, take me to my tower

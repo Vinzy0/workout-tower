@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { motion } from 'motion/react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
+import { autoBackup } from '../backup'
 import { Confetti } from '../components/Confetti'
 import { toast } from '../components/toast'
 import { performed } from '../core/stats'
@@ -27,6 +28,7 @@ export function Done() {
 
   useEffect(() => {
     sound.fanfare()
+    autoBackup() // Android app: copy to Documents/Tower so data survives an uninstall
     haptics.tap()
   }, [])
 
@@ -49,6 +51,7 @@ export function Done() {
     try {
       const [full, thumb] = await Promise.all([resize(raw, 1280), resize(raw, 240, true)])
       await storage.putPhoto(id, full, thumb)
+      autoBackup()
       sound.shutter()
       haptics.success()
     } catch {
