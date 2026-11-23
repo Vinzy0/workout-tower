@@ -1,4 +1,15 @@
-import type { Unit } from './types'
+import type { Equipment, Exercise, Unit } from './types'
+
+export const equipmentOf = (ex: Pick<Exercise, 'bodyweight' | 'equipment'>): Equipment =>
+  ex.equipment ?? (ex.bodyweight ? 'bodyweight' : 'dumbbell')
+
+/** Column label above the weight wheel. */
+export function weightLabel(ex: Pick<Exercise, 'bodyweight' | 'equipment'>, unit: Unit): string {
+  const e = equipmentOf(ex)
+  if (e === 'bodyweight') return `added ${unit}`
+  if (e === 'dumbbell') return `${unit} each`
+  return unit
+}
 
 const LB = 2.20462
 

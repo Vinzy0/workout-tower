@@ -7,7 +7,7 @@ import { toast } from '../components/toast'
 import { TopBar } from '../components/ui'
 import { Wheel } from '../components/Wheel'
 import type { Entry, Exercise, Session, Unit } from '../core/types'
-import { fmtWeight, REPS, toDisplay, toKg, weightValues } from '../core/units'
+import { fmtWeight, REPS, toDisplay, toKg, weightLabel, weightValues } from '../core/units'
 import { nextSet } from '../data'
 import { haptics } from '../platform/haptics'
 import { storage } from '../platform/storage'
@@ -217,7 +217,7 @@ function SetEditor({
       </div>
       <div className="mb-1 grid grid-cols-[18px_1fr_1fr] gap-1.5 text-center text-xs text-muted">
         <span />
-        <span>{ex.bodyweight ? `+${unit}` : `${unit} each`}</span>
+        <span>{weightLabel(ex, unit)}</span>
         <span>reps</span>
       </div>
       <div className="space-y-2">
@@ -230,7 +230,7 @@ function SetEditor({
               onChange={(v) => setAt(i, { weight: toKg(v, unit) })}
               format={(v) => fmtWeight(v, ex.bodyweight)}
               itemH={36}
-              label={`Set ${i + 1} · ${ex.bodyweight ? `added ${unit}` : `${unit} each`}`}
+              label={`Set ${i + 1} · ${weightLabel(ex, unit)}`}
             />
             <Wheel values={REPS} value={set.reps} onChange={(v) => setAt(i, { reps: v })} format={String} itemH={36} label={`Set ${i + 1} · reps`} />
           </div>

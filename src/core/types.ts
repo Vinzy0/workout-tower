@@ -5,12 +5,19 @@ export type SetEntry = { weight: number; reps: number } // weight in kg (per dum
 
 export type Entry = { exerciseId: string; sets: SetEntry[]; done: boolean }
 
+// dumbbell: weight per dumbbell ("kg each"). cable/barbell: total load ("kg").
+// bodyweight: weight is added load ("BW" at 0, "+X" above).
+export type Equipment = 'dumbbell' | 'cable' | 'barbell' | 'bodyweight'
+export const EQUIPMENT: Equipment[] = ['dumbbell', 'cable', 'barbell', 'bodyweight']
+
 export type Exercise = {
   id: string
   name: string
   emoji: string
   stepSize: number
-  bodyweight: boolean
+  bodyweight: boolean // kept in sync with equipment === 'bodyweight'
+  /** Missing on older records: derive with equipmentOf(). */
+  equipment?: Equipment
   defaultWeight: number
   defaultReps: number
   defaultSets: number

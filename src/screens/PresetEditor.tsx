@@ -7,8 +7,8 @@ import { Sheet } from '../components/Sheet'
 import { Segmented, TopBar } from '../components/ui'
 import { Wheel } from '../components/Wheel'
 import { LIBRARY } from '../core/library'
-import { STEP_SIZES, type Exercise, type Preset, type Unit } from '../core/types'
-import { fmtNum, fmtWeight, REPS, SETS, toDisplay, toKg, weightValues } from '../core/units'
+import { EQUIPMENT, STEP_SIZES, type Equipment, type Exercise, type Preset, type Unit } from '../core/types'
+import { equipmentOf, fmtNum, fmtWeight, REPS, SETS, toDisplay, toKg, weightLabel, weightValues } from '../core/units'
 import { addToPreset, createCustomExercise, startSession } from '../data'
 import { haptics } from '../platform/haptics'
 import { storage } from '../platform/storage'
@@ -73,7 +73,7 @@ export function PresetEditor() {
         {order.length === 0 ? (
           <button onClick={() => setLib(true)} className="press mt-4 w-full rounded-[18px] bg-attention p-5 text-left text-on-pastel">
             <div className="font-[Rubik] text-lg font-medium">Add your exercises</div>
-            <div className="text-sm opacity-80">Pick from 44 home-gym moves. Takes a few seconds.</div>
+            <div className="text-sm opacity-80">Pick from {LIBRARY.length} moves. Takes a few seconds.</div>
           </button>
         ) : (
           <>
@@ -170,7 +170,7 @@ function ExerciseRow({
       {open && (
         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-3 px-3 pb-3">
           <div className="grid grid-cols-3 gap-2 text-center text-xs text-muted">
-            <div>{ex.bodyweight ? `added ${unit}` : `${unit} each`}</div>
+            <div>{weightLabel(ex, unit)}</div>
             <div>reps</div>
             <div>sets</div>
             <Wheel
@@ -187,6 +187,15 @@ function ExerciseRow({
             <div className="mb-1 text-xs text-muted">Weight step ({unit})</div>
             <Segmented options={STEP_SIZES} value={ex.stepSize as (typeof STEP_SIZES)[number]} onChange={(s) => put({ stepSize: s })} format={fmtNum} />
           </div>
+          <div>
+            <div className="mb-1 text-xs text-muted">Weight is</div>
+            <Segmented
+              options={EQUIPMENT}
+              value={equipmentOf(ex)}
+              onChange={(e) => put({ equipment: e, bodyweight: e === 'bodyweight' })}
+              format={(e) => EQUIPMENT_LABEL[e]}
+            />
+          </div>
           <button onClick={onRemove} className="press text-sm text-error underline underline-offset-[3px]">
             Remove from workout
           </button>
@@ -196,7 +205,7 @@ function ExerciseRow({
   )
 }
 
-type LibItem = { id: string; name: string; emoji: string; group: string; bodyweight: boolean }
+type LibItem = { id: string; name: string; emoji: string; group: string; bodyweight: boolean; equipment?: Equipment }
 
 function LibrarySheet({
   open,
@@ -225,7 +234,7 @@ function LibrarySheet({
 
   const items: LibItem[] = [...custom.map((c) => ({ ...c, group: 'Custom' })), ...LIBRARY]
   const query = q.trim().toLowerCase()
-  const shown = items.filter((i) => !query || i.name.toLowerCase().includes(query) || i.group.toLowerCase().includes(query))
+  const shown = items.filter((i) => !query || [i.name, i.group, equipmentOf(i)].some((t) => t.toLowerCase().includes(query)))
   const groups = [...new Set(shown.map((i) => i.group))]
 
   const toggle = (id: string) => {
@@ -282,7 +291,7 @@ function LibrarySheet({
                           <span className="text-xl">{i.emoji}</span>
                           <span className="flex-1">
                             {i.name}
-                            {i.bodyweight && <span className="ml-2 text-xs text-muted">bodyweight</span>}
+                            {equipmentOf(i) !== 'dumbbell' && <span className="ml-2 text-xs text-muted">{equipmentOf(i)}</span>}
                           </span>
                           {added ? (
                             <span className="text-xs text-muted">Added</span>
@@ -325,13 +334,13 @@ function CustomForm({
   onCancel,
 }: {
   initialName: string
-  onSave: (e: Pick<Exercise, 'name' | 'emoji' | 'stepSize' | 'bodyweight'>) => void
+  onSave: (e: Pick<Exercise, 'name' | 'emoji' | 'stepSize' | 'equipment'>) => void
   onCancel: () => void
 }) {
   const [name, setName] = useState(initialName.trim())
   const [emoji, setEmoji] = useState('💪')
   const [stepSize, setStep] = useState<(typeof STEP_SIZES)[number]>(2.5)
-  const [bodyweight, setBw] = useState(false)
+  const [equipment, setEquipment] = useState<Equipment>('dumbbell')
 
   return (
     <div className="space-y-3 pb-2">
@@ -355,18 +364,18 @@ function CustomForm({
         <div className="mb-1 text-xs text-muted">Weight step</div>
         <Segmented options={STEP_SIZES} value={stepSize} onChange={setStep} format={fmtNum} />
       </div>
-      <Segmented
-        options={['Dumbbell', 'Bodyweight'] as const}
-        value={bodyweight ? 'Bodyweight' : 'Dumbbell'}
-        onChange={(v) => setBw(v === 'Bodyweight')}
-      />
+      <div>
+        <div className="mb-1 text-xs text-muted">Weight is</div>
+        <Segmented options={EQUIPMENT} value={equipment} onChange={setEquipment} format={(e) => EQUIPMENT_LABEL[e]} />
+        <p className="mt-1 text-xs text-muted">{EQUIPMENT_HINT[equipment]}</p>
+      </div>
       <div className="flex gap-2 pt-1">
         <button onClick={onCancel} className="row press h-14 flex-1">
           Cancel
         </button>
         <button
           disabled={!name.trim()}
-          onClick={() => onSave({ name: name.trim(), emoji: emoji.trim() || '💪', stepSize, bodyweight })}
+          onClick={() => onSave({ name: name.trim(), emoji: emoji.trim() || '💪', stepSize, equipment })}
           className="btn-primary press h-14 flex-1 disabled:opacity-40"
         >
           Save
@@ -374,4 +383,12 @@ function CustomForm({
       </div>
     </div>
   )
+}
+
+const EQUIPMENT_LABEL: Record<Equipment, string> = { dumbbell: 'Dumbbell', cable: 'Cable', barbell: 'Barbell', bodyweight: 'Body' }
+const EQUIPMENT_HINT: Record<Equipment, string> = {
+  dumbbell: 'Logged per dumbbell (kg each).',
+  cable: 'Cable or machine: the stack/pin weight.',
+  barbell: 'Total bar + plates.',
+  bodyweight: 'BW at 0, extra weight above it.',
 }

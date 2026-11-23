@@ -29,9 +29,9 @@ export async function addToPreset(presetId: string, ids: string[]) {
   await storage.putPreset({ ...preset, exerciseIds })
 }
 
-export async function createCustomExercise(e: Pick<Exercise, 'name' | 'emoji' | 'stepSize' | 'bodyweight'>): Promise<string> {
+export async function createCustomExercise(e: Pick<Exercise, 'name' | 'emoji' | 'stepSize' | 'equipment'>): Promise<string> {
   const id = newId()
-  await storage.putExercise({ ...e, id, defaultWeight: 0, defaultReps: 10, defaultSets: 3, updatedAt: Date.now() })
+  await storage.putExercise({ ...e, id, bodyweight: e.equipment === 'bodyweight', defaultWeight: 0, defaultReps: 10, defaultSets: 3, updatedAt: Date.now() })
   return id
 }
 
