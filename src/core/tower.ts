@@ -108,3 +108,12 @@ export function materialFor(n: number): Material {
 }
 
 export const MILESTONES = new Set([4, 8, 12, 20, 52])
+
+/** First milestone at or above n (52-week multiples after 52). */
+export function nextMilestone(n: number): number {
+  for (const m of [4, 8, 12, 20, 52]) if (m >= n) return m
+  return Math.ceil(n / 52) * 52
+}
+
+/** Week number where each material starts. */
+export const TIER_START: Record<number, Material> = { 5: 'stone', 9: 'iron', 13: 'gold', 21: 'diamond' }

@@ -5,7 +5,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type Ref } from 
 import { useNavigate } from 'react-router'
 import { Sheet } from '../components/Sheet'
 import { toast } from '../components/toast'
-import { computeTower, materialFor, MILESTONES, type Block, type TowerState } from '../core/tower'
+import { computeTower, materialFor, MILESTONES, nextMilestone, TIER_START, type Block, type TowerState } from '../core/tower'
 import { createPreset, daysAgo, startSession } from '../data'
 import { haptics } from '../platform/haptics'
 import { storage } from '../platform/storage'
@@ -82,7 +82,7 @@ export function Home() {
 
       <TowerView tower={tower} fx={fx} />
 
-      <div className="safe-bottom px-[18px] pt-3">
+      <div className="px-[18px] pt-3">
         <button
           onClick={() => {
             haptics.tap()
@@ -235,7 +235,10 @@ const LEVEL = 64 // block height; gap below each block is 18px
 function TowerView({ tower, fx }: { tower: TowerState; fx: Fx | null }) {
   const ghostRef = useRef<HTMLDivElement>(null)
   const { blocks, height, best, week, cracked } = tower
-  const spacers = Math.max(0, best - (height + 1))
+  // Empty slots above the current week, up to the next milestone (or your best), so you see what's next.
+  const here = height + 1
+  const target = Math.min(here + 12, Math.max(best, nextMilestone(here), here + 3))
+  const future = Array.from({ length: target - here }, (_, i) => target - i) // top → bottom
   const showBest = best > height
 
   useLayoutEffect(() => {
@@ -246,14 +249,13 @@ function TowerView({ tower, fx }: { tower: TowerState; fx: Fx | null }) {
     <div className="relative min-h-0 flex-1">
       <div className="no-scrollbar h-full overflow-y-auto">
         <div className="flex min-h-full flex-col justify-end gap-[18px] px-[18px] pb-6 pt-10">
-          {showBest && (
-            <div className="relative -mb-[9px] border-t-2 border-dashed border-faint">
-              <span className="absolute -top-3 right-0 bg-bg pl-2 text-xs text-muted">Best · {best} weeks</span>
+          {future.map((n, i) => (
+            <div key={n}>
+              {showBest && n === best && <BestLine best={best} />}
+              <FutureSlot n={n} fade={0.35 + (0.65 * (i + 1)) / future.length} />
             </div>
-          )}
-          {Array.from({ length: spacers }, (_, i) => (
-            <div key={i} style={{ height: LEVEL }} />
           ))}
+          {showBest && best === here && <BestLine best={best} />}
           <Ghost ref={ghostRef} n={height + 1} week={week} fillFrom={fx?.fillFrom ?? null} done={week.done} />
           {blocks
             .map((b, i) => (
@@ -341,23 +343,56 @@ function Ghost({
     const id = requestAnimationFrame(() => setShown(to))
     return () => cancelAnimationFrame(id)
   }, [to])
-  const t = 'clip-path .8s cubic-bezier(.2,.8,.2,1) .2s, top .8s cubic-bezier(.2,.8,.2,1) .2s'
-  const label = <span className="font-display text-3xl font-black">{n}</span>
+  const t = 'clip-path .8s cubic-bezier(.2,.8,.2,1) .2s'
   return (
     <div ref={ref} className="relative mx-auto w-[88%]" style={{ height: LEVEL }}>
       <div
-        className="absolute inset-0 grid place-items-center rounded-2xl border-[2.5px] border-dashed border-faint text-faint"
+        className="absolute inset-0 rounded-2xl border-[2.5px] border-dashed border-faint"
         style={{ clipPath: `inset(0% 0% ${shown}% 0%)`, transition: t }}
-      >
-        {label}
-      </div>
+      />
       <div
-        className={`fill slab-${materialFor(n)} absolute inset-0 grid place-items-center rounded-2xl`}
-        style={{ clipPath: `inset(${100 - shown}% 0% 0% 0%)`, transition: t }}
+        className={`fill slab-${materialFor(n)} absolute inset-0 rounded-2xl`}
+        style={{ clipPath: `inset(${100 - shown}% 0% 0% 0%)`, transition: t, backgroundImage: 'none' }}
+      />
+      {/* One sticker-style number, readable on both the empty and the filled part. */}
+      <span
+        className="absolute inset-0 grid place-items-center font-display text-3xl font-black text-text"
+        style={{ WebkitTextStroke: '7px #0d0d0f', paintOrder: 'stroke fill' }}
       >
-        {label}
-        <div className="absolute inset-x-0 h-[3px] bg-white/50" style={{ top: `${100 - shown}%`, transition: t }} />
-      </div>
+        {n}
+      </span>
+    </div>
+  )
+}
+
+function FutureSlot({ n, fade }: { n: number; fade: number }) {
+  const tier = TIER_START[n]
+  return (
+    <div
+      className="relative mx-auto grid w-[88%] place-items-center rounded-2xl border-2 border-dashed border-white/10 font-display text-2xl font-black text-white/15"
+      style={{ height: LEVEL, opacity: fade }}
+    >
+      {n}
+      {MILESTONES.has(n) && (
+        <span className="chip absolute -top-2 right-[4%] flex items-center gap-1 bg-attention">
+          <Flag size={11} weight="fill" /> {n} weeks
+        </span>
+      )}
+      {tier && (
+        <span className={`chip fill slab-${tier} absolute -top-2 left-[4%]`} style={{ backgroundImage: 'none' }}>
+          {tier[0].toUpperCase() + tier.slice(1)} unlocks
+        </span>
+      )}
+    </div>
+  )
+}
+
+function BestLine({ best }: { best: number }) {
+  return (
+    <div className="mb-[18px] flex items-center gap-2 text-xs font-extrabold text-muted">
+      <span className="h-0 flex-1 border-t-2 border-dashed border-faint" />
+      Best · {best} weeks
+      <span className="h-0 flex-1 border-t-2 border-dashed border-faint" />
     </div>
   )
 }

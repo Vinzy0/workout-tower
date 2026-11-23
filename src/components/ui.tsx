@@ -1,6 +1,7 @@
 import { CaretLeft } from '@phosphor-icons/react'
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router'
+import { groupColor } from '../core/library'
 
 export function TopBar({ title, back = '/', right }: { title?: ReactNode; back?: string; right?: ReactNode }) {
   const nav = useNavigate()
@@ -12,6 +13,18 @@ export function TopBar({ title, back = '/', right }: { title?: ReactNode; back?:
       <div className="min-w-0 flex-1 truncate font-display text-xl font-black">{title}</div>
       {right}
     </header>
+  )
+}
+
+/** Exercise emoji on its muscle-group pastel. */
+export function ExTile({ id, emoji, size = 44 }: { id: string; emoji?: string; size?: number }) {
+  return (
+    <span
+      className="grid shrink-0 place-items-center rounded-[14px]"
+      style={{ width: size, height: size, fontSize: size * 0.5, background: groupColor(id), boxShadow: 'inset 0 -3px 0 rgba(0,0,0,.18)' }}
+    >
+      {emoji ?? '❔'}
+    </span>
   )
 }
 
