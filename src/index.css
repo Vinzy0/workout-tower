@@ -1,0 +1,157 @@
+@import "tailwindcss";
+
+/* Pastel Blocks tokens (dark-first). See DESIGN.md. */
+:root {
+  --background: #0d0d0f;
+  --surface: #17171a;
+  --surface-hover: #222226;
+  --text: #ecebe8;
+  --muted: #8a8a8a;
+  --faint: #55555a;
+  --error: #e06a5a;
+  --on-pastel: #1a1a1a;
+  --healthy: #c3ddbf;
+  --healthy-chip: #8fbf88;
+  --attention: #eedc9a;
+  --attention-chip: #d9be55;
+  --people: #bfd3f0;
+  --connect: #f2cdb2;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-error: var(--error);
+  --color-on-pastel: var(--on-pastel);
+  --color-healthy: var(--healthy);
+  --color-healthy-chip: var(--healthy-chip);
+  --color-attention: var(--attention);
+  --color-attention-chip: var(--attention-chip);
+  --color-people: var(--people);
+  --color-connect: var(--connect);
+  --font-sans: "M PLUS Rounded 1c", ui-rounded, system-ui, sans-serif;
+  --font-display: "Rubik", ui-rounded, system-ui, sans-serif;
+  --ease-spring: cubic-bezier(.3, 1.6, .5, 1);
+  --ease-out-soft: cubic-bezier(.2, .8, .2, 1);
+}
+
+@layer components {
+html, body, #root { height: 100%; }
+body {
+  background: var(--background);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+h1, h2, h3 { font-family: var(--font-display); font-weight: 500; letter-spacing: -0.02em; }
+button { cursor: pointer; }
+.tabular { font-variant-numeric: tabular-nums; }
+.no-select { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.safe-top { padding-top: max(env(safe-area-inset-top), 12px); }
+.safe-bottom { padding-bottom: max(env(safe-area-inset-bottom), 12px); }
+
+/* Press feedback for anything tappable */
+.press { transition: transform 120ms var(--ease-spring), background 150ms ease; }
+.press:active { transform: scale(.96); }
+@media (hover: hover) { .row:hover { background: var(--surface-hover); } }
+
+.btn-primary {
+  background: var(--text); color: var(--background);
+  font-family: var(--font-display); font-weight: 500;
+  border-radius: 12px;
+}
+.row { background: var(--surface); border-radius: 14px; }
+.chip { font-family: var(--font-display); font-weight: 500; font-size: 11px; padding: 2px 7px; border-radius: 6px; color: var(--on-pastel); }
+
+/* Wheel picker */
+.wheel { overflow-y: scroll; scroll-snap-type: y mandatory; overscroll-behavior: contain; touch-action: pan-y; }
+.wheel > * { scroll-snap-align: center; }
+
+/* ---------- Tower materials (game art, not UI chrome: see DESIGN.md note in README) ---------- */
+.slab {
+  --face: #c9a27e; --side: #8f6c4c; --ink: #3b2a1c;
+  background: var(--face);
+  color: var(--ink);
+  box-shadow: 0 10px 0 var(--side);
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.slab-wood {
+  --face: #c9a27e; --side: #8f6c4c; --ink: #3b2a1c;
+  background-image: repeating-linear-gradient(0deg, transparent 0 9px, rgba(90, 55, 25, .13) 9px 11px);
+}
+.slab-stone {
+  --face: #a9abaf; --side: #6f7175; --ink: #2a2b2e;
+  background-image:
+    radial-gradient(circle at 18% 30%, rgba(0,0,0,.10) 0 6px, transparent 7px),
+    radial-gradient(circle at 78% 65%, rgba(0,0,0,.08) 0 9px, transparent 10px),
+    radial-gradient(circle at 52% 20%, rgba(255,255,255,.10) 0 4px, transparent 5px);
+}
+.slab-iron {
+  --face: #7f8b95; --side: #4c555d; --ink: #15191c;
+  background-image:
+    radial-gradient(circle at 14px 50%, rgba(0,0,0,.35) 0 3px, transparent 4px),
+    radial-gradient(circle at calc(100% - 14px) 50%, rgba(0,0,0,.35) 0 3px, transparent 4px);
+}
+.slab-gold {
+  --face: #e3c77a; --side: #a98a3c; --ink: #3d300c;
+  background-image: linear-gradient(115deg, transparent 0 40%, rgba(255,255,255,.28) 40% 48%, transparent 48%);
+}
+.slab-diamond {
+  --face: #a8dde0; --side: #5f9ea3; --ink: #11393c;
+  background-image:
+    linear-gradient(135deg, rgba(255,255,255,.25) 0 25%, transparent 25% 50%, rgba(255,255,255,.18) 50% 75%, transparent 75%);
+  background-size: 28px 28px;
+}
+.slab-shield {
+  --face: #2a2a2f; --side: #1c1c20; --ink: var(--muted);
+  box-shadow: 0 6px 0 var(--side);
+}
+.slab-ghost {
+  background: transparent;
+  box-shadow: none;
+  outline: 2px dashed var(--faint);
+  outline-offset: -2px;
+  color: var(--text);
+}
+.slab-cracked::after {
+  content: "";
+  position: absolute; inset: 0;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 64' preserveAspectRatio='none'%3E%3Cpath d='M70 0 L82 18 L72 30 L90 46 L84 64 M82 18 L104 24 M210 0 L200 14 L216 28 L204 44 L214 64 M216 28 L236 32' fill='none' stroke='%23111' stroke-width='3' stroke-linejoin='round' opacity='.7'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px) rotate(-1deg); }
+  40% { transform: translateX(7px) rotate(1deg); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(3px); }
+}
+.shake { animation: shake .45s ease-in-out; }
+
+} /* end components layer */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; }
+}
+
+/* Staggered entrance for lists */
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.stagger > * { animation: rise .3s var(--ease-out-soft) both; }
+.stagger > *:nth-child(2) { animation-delay: 60ms; }
+.stagger > *:nth-child(3) { animation-delay: 120ms; }
+.stagger > *:nth-child(4) { animation-delay: 180ms; }
+.stagger > *:nth-child(n+5) { animation-delay: 240ms; }
