@@ -1,32 +1,33 @@
-# React + TypeScript + Vite
+# Tower: one-thumb workout logger
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Live: https://vinzy0.github.io/workout-tower/
 
-Currently, two official plugins are available:
+A PWA for logging home-gym workouts with scroll wheels (no typing) and a streak "tower":
+one block per week you hit your goal.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Run
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```powershell
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+```powershell
+npm test
+```
+
+Every push to `main` tests, builds and deploys to GitHub Pages (`.github/workflows/deploy.yml`).
+
+## Layout
+
+- `src/core/`: pure logic. `tower.ts` derives the whole tower (streak, shields, cracks, collapses)
+  from finished sessions; it is never stored. Tests in `tower.test.ts`.
+- `src/platform/`: everything platform-specific (storage, auth, haptics, share). See `NATIVE_MIGRATION.md`.
+- `src/sync.ts`: Google Drive appDataFolder sync. See `GOOGLE_SETUP.md`.
+- `src/screens/`: Home (tower), Workout, Presets, PresetEditor, Settings, PastTowers.
+
+## Design
+
+Follows `DESIGN.md` (Pastel Blocks). One intentional exception: the tower's material tiers
+(wood, stone, iron, gold, diamond) use textured, non-pastel colors and a solid "depth" face,
+because the spec asks the tower to feel like a game. They are game art, not UI chrome.

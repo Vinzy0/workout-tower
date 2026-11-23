@@ -9,6 +9,7 @@ import { computeTower, materialFor, MILESTONES, type Block, type TowerState } fr
 import { createPreset, daysAgo, startSession } from '../data'
 import { haptics } from '../platform/haptics'
 import { storage } from '../platform/storage'
+import { getDriveState } from '../sync'
 
 const DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
 
@@ -17,6 +18,7 @@ export function Home() {
   const sessions = useLiveQuery(storage.listSessions)
   const goals = useLiveQuery(storage.listGoals)
   const presets = useLiveQuery(storage.listPresets)
+  const drive = useLiveQuery(getDriveState)
   const [startOpen, setStartOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -42,7 +44,7 @@ export function Home() {
       <header className="safe-top px-[18px] pb-2">
         <div className="flex items-start gap-2">
           <div className="min-w-0 flex-1">
-            <h1 className="tabular text-[32px] leading-tight">{height > 0 ? `Week ${height} streak` : 'Build your tower'}</h1>
+            <h1 className="tabular text-[28px] leading-tight">{height > 0 ? `Week ${height} streak` : 'Build your tower'}</h1>
             <p className="tabular text-muted">
               {week.count} / {week.goal} this week
             </p>
@@ -58,6 +60,11 @@ export function Home() {
         <div className="mt-2 flex min-h-5 gap-1.5">
           {cracked && <span className="chip bg-attention">Cracked · hit this week's goal to repair</span>}
           {week.done && <span className="chip bg-healthy">Week done</span>}
+          {drive?.connected && drive.error && (
+            <button onClick={() => nav('/settings')} className="chip bg-attention">
+              Not synced
+            </button>
+          )}
         </div>
       </header>
 
