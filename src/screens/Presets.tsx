@@ -22,7 +22,7 @@ export function Presets() {
         {presets?.map((p) => (
           <button key={p.id} onClick={() => nav(`/presets/${p.id}`)} className="row press flex w-full items-center gap-3 px-4 py-4 text-left">
             <div className="min-w-0 flex-1">
-              <div className="truncate">{p.name}</div>
+              <div className="truncate font-extrabold">{p.name}</div>
               <div className="text-xs text-muted">{p.exerciseIds.length} exercises</div>
             </div>
             <CaretRight className="text-muted" />
@@ -30,7 +30,7 @@ export function Presets() {
         ))}
       </div>
       <div className="safe-bottom px-[18px] pt-3">
-        <button onClick={create} className="btn-primary press h-14 w-full text-base">
+        <button onClick={create} className="btn-primary chunky h-14 w-full text-base">
           New workout
         </button>
       </div>

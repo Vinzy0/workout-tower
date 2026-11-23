@@ -26,7 +26,7 @@ export function PastTowers() {
         {past.length === 0 && <p className="py-8 text-center text-muted">No collapsed towers. Keep it that way.</p>}
         {past.map((p) => (
           <div key={p.start} className="row flex items-center gap-4 px-4 py-3">
-            <div className={`slab slab-${materialFor(p.height)} grid h-12 w-12 shrink-0 place-items-center font-[Rubik] text-lg font-bold`} style={{ boxShadow: 'none' }}>
+            <div className={`slab slab-${materialFor(p.height)} grid h-12 w-12 shrink-0 place-items-center font-display text-lg font-bold`} style={{ boxShadow: 'none' }}>
               {p.height}
             </div>
             <div>

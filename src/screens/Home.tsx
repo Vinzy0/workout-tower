@@ -1,4 +1,4 @@
-import { CaretRight, Flag, List, ShieldCheck } from '@phosphor-icons/react'
+import { CaretRight, Check, Flag, List, ShieldCheck } from '@phosphor-icons/react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type Ref } from "react"
@@ -49,23 +49,27 @@ export function Home() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="safe-top px-[18px] pb-2">
-        <div className="flex items-start gap-2">
-          <div className="min-w-0 flex-1">
-            <h1 className="tabular text-[28px] leading-tight">{height > 0 ? `Week ${height} streak` : 'Build your tower'}</h1>
-            <p className="tabular text-muted">
-              {week.count} / {week.goal} this week
-            </p>
-          </div>
+      <header className="safe-top px-[18px] pb-1">
+        <div className="flex items-center gap-2">
+          <h1 className="tabular min-w-0 flex-1 text-[30px] leading-tight">
+            {height > 0 ? (
+              <>
+                Week {height} <span className="text-muted">streak</span>
+              </>
+            ) : (
+              'Build your tower'
+            )}
+          </h1>
           <div className="row flex h-11 items-center gap-1.5 px-3" aria-label={`${shields} shields`}>
-            <ShieldCheck size={20} weight={shields ? 'fill' : 'regular'} className={shields ? 'text-text' : 'text-faint'} />
-            <span className="tabular font-[Rubik] font-medium">{shields}</span>
+            <ShieldCheck size={20} weight={shields ? 'fill' : 'regular'} className={shields ? 'text-people' : 'text-faint'} />
+            <span className="tabular font-display font-black">{shields}</span>
           </div>
           <button aria-label="Menu" onClick={() => setMenuOpen(true)} className="press row grid h-11 w-11 place-items-center">
             <List size={20} />
           </button>
         </div>
-        <div className="mt-2 flex min-h-5 gap-1.5">
+        <WeekCard week={week} />
+        <div className="mt-2 flex min-h-5 flex-wrap gap-1.5">
           {cracked && <span className="chip bg-attention">Cracked · hit this week's goal to repair</span>}
           {week.done && <span className="chip bg-healthy">Week done</span>}
           {drive?.connected && drive.error && (
@@ -84,7 +88,7 @@ export function Home() {
             haptics.tap()
             setStartOpen(true)
           }}
-          className="btn-primary press h-16 w-full text-lg"
+          className="btn-primary chunky h-16 w-full text-lg"
         >
           {draft ? 'Resume workout' : 'Start workout'}
         </button>
@@ -93,8 +97,8 @@ export function Home() {
       <Sheet open={startOpen} onClose={() => setStartOpen(false)} title="Start workout">
         <div className="min-h-0 space-y-1.5 overflow-y-auto pb-2">
           {draft && (
-            <button onClick={() => nav(`/workout/${draft.id}`)} className="press w-full rounded-[18px] bg-attention p-4 text-left text-on-pastel">
-              <div className="font-[Rubik] text-lg font-medium">Resume {presets.find((p) => p.id === draft.presetId)?.name ?? 'workout'}</div>
+            <button onClick={() => nav(`/workout/${draft.id}`)} className="chunky w-full rounded-[18px] bg-attention [--lip:#d9be55] p-4 text-left text-on-pastel">
+              <div className="font-display text-lg font-medium">Resume {presets.find((p) => p.id === draft.presetId)?.name ?? 'workout'}</div>
               <div className="text-sm opacity-80">
                 {draft.entries.filter((e) => e.done).length} of {draft.entries.length} exercises done
               </div>
@@ -103,9 +107,9 @@ export function Home() {
           {presets.length === 0 ? (
             <button
               onClick={async () => nav(`/presets/${(await createPreset()).id}?add=1`)}
-              className="press w-full rounded-[18px] bg-attention p-5 text-left text-on-pastel"
+              className="chunky w-full rounded-[18px] bg-attention [--lip:#d9be55] p-5 text-left text-on-pastel"
             >
-              <div className="font-[Rubik] text-lg font-medium">Create your first workout</div>
+              <div className="font-display text-lg font-medium">Create your first workout</div>
               <div className="text-sm opacity-80">Pick exercises from the library. Under a minute.</div>
             </button>
           ) : (
@@ -114,7 +118,7 @@ export function Home() {
               return (
                 <button key={p.id} onClick={() => start(p.id)} className="row press flex w-full items-center gap-3 px-4 py-4 text-left">
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-base">{p.name}</div>
+                    <div className="truncate text-base font-extrabold">{p.name}</div>
                     <div className="text-xs text-muted">
                       {p.exerciseIds.length} exercises · {t ? `last done ${daysAgo(t)}` : 'never done'}
                     </div>
@@ -164,7 +168,7 @@ function GoalPicker({ open }: { open: boolean }) {
               haptics.tap()
               storage.setGoal(n)
             }}
-            className={`press tabular h-16 rounded-xl font-[Rubik] text-xl font-medium ${n === 2 ? 'bg-text text-bg' : 'bg-surface'}`}
+            className={`press tabular h-16 rounded-xl font-display text-xl font-medium ${n === 2 ? 'bg-text text-bg' : 'bg-surface'}`}
           >
             {n}
           </button>
@@ -291,7 +295,7 @@ function TowerBlock({ b, top, cracked, fx }: { b: Block; top: boolean; cracked: 
         animate={land ? { y: [null, 0, 0, 0], opacity: 1, scaleY: [1, 1, 0.86, 1] } : { y: 0, opacity: 1 }}
         transition={land ? { duration: 0.7, times: [0, 0.55, 0.7, 1], ease: 'easeIn' } : undefined}
         onAnimationComplete={() => land && haptics.heavy()}
-        className={`slab slab-${mat} mx-auto flex w-[88%] items-center justify-center font-[Rubik] text-3xl font-bold ${
+        className={`slab slab-${mat} mx-auto flex w-[88%] items-center justify-center font-display text-3xl font-black ${
           cracked ? 'slab-cracked' : ''
         } ${cracked && fx?.cracked ? 'shake' : ''}`}
         style={{ height: LEVEL, transformOrigin: 'bottom' }}
@@ -315,6 +319,7 @@ function TowerBlock({ b, top, cracked, fx }: { b: Block; top: boolean; cracked: 
   )
 }
 
+/** Current week: one slab. Dashed outline where it's empty, solid material rising from the bottom. */
 function Ghost({
   ref,
   n,
@@ -328,34 +333,64 @@ function Ghost({
   fillFrom: number | null
   done: boolean
 }) {
-  const pct = (c: number) => `${done ? 0 : Math.min(100, (c / week.goal) * 100)}%`
+  const p = (c: number) => (done ? 0 : Math.min(100, (c / week.goal) * 100))
+  const to = p(week.count)
+  // Start at the last-seen fill, then transition to the real value on the next frame.
+  const [shown, setShown] = useState(p(fillFrom ?? week.count))
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setShown(to))
+    return () => cancelAnimationFrame(id)
+  }, [to])
+  const t = 'clip-path .8s cubic-bezier(.2,.8,.2,1) .2s, top .8s cubic-bezier(.2,.8,.2,1) .2s'
+  const label = <span className="font-display text-3xl font-black">{n}</span>
   return (
-    <div ref={ref} className="slab slab-ghost relative mx-auto w-[88%]" style={{ height: LEVEL }}>
-      <motion.div
-        className={`slab slab-${materialFor(n)} absolute inset-x-0 bottom-0 rounded-[14px] opacity-60`}
-        style={{ boxShadow: 'none' }}
-        initial={{ height: pct(fillFrom ?? week.count) }}
-        animate={{ height: pct(week.count) }}
-        transition={{ duration: 0.7, ease: [0.2, 0.8, 0.2, 1], delay: 0.15 }}
-      />
-      <div className="relative flex h-full items-center gap-3 px-4">
-        <span className="font-[Rubik] text-3xl font-bold text-muted">{n}</span>
-        <div className="flex flex-1 justify-end gap-1">
-          {DAYS.map((d, i) => {
-            const on = !done && week.days[i]
-            return (
-              <span
-                key={i}
-                className={`grid h-6 w-6 place-items-center rounded-full text-[10px] font-medium ${
-                  on ? 'bg-healthy text-on-pastel' : 'bg-surface text-muted'
-                }`}
-              >
-                {d}
-              </span>
-            )
-          })}
-        </div>
+    <div ref={ref} className="relative mx-auto w-[88%]" style={{ height: LEVEL }}>
+      <div
+        className="absolute inset-0 grid place-items-center rounded-2xl border-[2.5px] border-dashed border-faint text-faint"
+        style={{ clipPath: `inset(0% 0% ${shown}% 0%)`, transition: t }}
+      >
+        {label}
       </div>
+      <div
+        className={`fill slab-${materialFor(n)} absolute inset-0 grid place-items-center rounded-2xl`}
+        style={{ clipPath: `inset(${100 - shown}% 0% 0% 0%)`, transition: t }}
+      >
+        {label}
+        <div className="absolute inset-x-0 h-[3px] bg-white/50" style={{ top: `${100 - shown}%`, transition: t }} />
+      </div>
+    </div>
+  )
+}
+
+function WeekCard({ week }: { week: TowerState['week'] }) {
+  const left = Math.max(0, week.goal - week.count)
+  const today = (new Date().getDay() + 6) % 7
+  return (
+    <div className="row mt-3 p-4">
+      <div className="mb-2.5 flex items-baseline justify-between">
+        <span className="font-display text-lg font-black">This week</span>
+        <span className="tabular text-sm font-bold text-muted">
+          {week.count} of {week.goal} workouts
+        </span>
+      </div>
+      <div className="bar">
+        <div className="bg-healthy" style={{ width: `${Math.min(100, (week.count / week.goal) * 100)}%` }} />
+      </div>
+      <div className="mt-3 flex justify-between">
+        {DAYS.map((d, i) => (
+          <span
+            key={i}
+            className={`grid h-9 w-9 place-items-center rounded-full text-xs font-extrabold ${
+              week.days[i] ? 'bg-healthy text-on-pastel' : 'bg-[#26262b] text-muted'
+            } ${i === today ? 'ring-2 ring-text/70 ring-offset-2 ring-offset-surface' : ''}`}
+          >
+            {week.days[i] ? <Check size={16} weight="bold" /> : d}
+          </span>
+        ))}
+      </div>
+      <p className="mt-2.5 text-xs font-semibold text-muted">
+        {left ? `${left} more to stack the next block` : 'Block stacked. Anything extra is a bonus.'}
+      </p>
     </div>
   )
 }

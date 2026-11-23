@@ -1,14 +1,14 @@
-import { Check, Minus, Plus, Trash } from '@phosphor-icons/react'
+import { CaretLeft, Check, Minus, Plus, Trash } from '@phosphor-icons/react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { motion } from 'motion/react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { toast } from '../components/toast'
-import { TopBar } from '../components/ui'
+import { groupColor, groupOf } from '../core/library'
 import { Wheel } from '../components/Wheel'
 import type { Entry, Exercise, Session, Unit } from '../core/types'
 import { fmtWeight, REPS, toDisplay, toKg, weightLabel, weightValues } from '../core/units'
-import { nextSet } from '../data'
+import { lastSets, nextSet } from '../data'
 import { haptics } from '../platform/haptics'
 import { storage } from '../platform/storage'
 import { syncAfterWorkout } from '../sync'
@@ -60,24 +60,29 @@ export function Workout() {
 
   const entry = s.entries.find((e) => e.exerciseId === sel)
   const ex = sel ? byId.get(sel) : undefined
+  const pct = s.entries.length ? (doneCount / s.entries.length) * 100 : 0
 
   return (
     <div className="flex h-full flex-col">
-      <TopBar
-        title={presetName ?? 'Workout'}
-        right={
-          <div className="flex items-center gap-1">
-            <span className="tabular mr-1 text-sm text-muted">
-              {doneCount}/{s.entries.length}
-            </span>
-            <button aria-label="Discard workout" onClick={discard} className="press grid h-11 w-11 place-items-center rounded-xl text-muted">
-              <Trash size={20} />
-            </button>
-          </div>
-        }
-      />
+      <header className="safe-top px-[10px]">
+        <div className="flex items-center gap-1">
+          <button aria-label="Back" onClick={() => nav('/')} className="press grid h-11 w-11 place-items-center rounded-xl">
+            <CaretLeft size={22} />
+          </button>
+          <h1 className="min-w-0 flex-1 truncate text-2xl">{presetName ?? 'Workout'}</h1>
+          <span className="tabular text-sm font-bold text-muted">
+            {doneCount} of {s.entries.length} done
+          </span>
+          <button aria-label="Discard workout" onClick={discard} className="press grid h-11 w-11 place-items-center rounded-xl text-muted">
+            <Trash size={20} />
+          </button>
+        </div>
+        <div className="bar mx-2 mt-1" style={{ height: 10 }}>
+          <div className="bg-healthy" style={{ width: `${pct}%` }} />
+        </div>
+      </header>
 
-      <div className="grid min-h-0 flex-1 grid-cols-[42%_58%]">
+      <div className="flex min-h-0 flex-1 pt-2">
         <ExercisePicker
           entries={s.entries}
           byId={byId}
@@ -87,7 +92,7 @@ export function Workout() {
             setSel(id)
           }}
         />
-        <div className="min-h-0 overflow-y-auto pl-2 pr-[18px]">
+        <div className="min-h-0 min-w-0 flex-1 overflow-y-auto pl-1 pr-4">
           {entry && ex ? (
             <SetEditor
               key={ex.id}
@@ -106,13 +111,13 @@ export function Workout() {
               }}
             />
           ) : (
-            <div className="grid h-full place-items-center px-4 text-center text-sm text-muted">Tap an exercise to log it</div>
+            <div className="grid h-full place-items-center px-4 text-center font-bold text-muted">Tap an exercise to log it</div>
           )}
         </div>
       </div>
 
-      <div className="safe-bottom px-[18px] pt-3">
-        <button onClick={finish} className="btn-primary press h-14 w-full text-base">
+      <div className="safe-bottom px-[18px] pt-2">
+        <button onClick={finish} className="btn-primary chunky h-14 w-full text-base">
           Finish workout
         </button>
         <button
@@ -120,7 +125,7 @@ export function Workout() {
             toast('Saved. Resume from Start workout.')
             nav('/')
           }}
-          className="mt-1 h-10 w-full text-sm text-muted"
+          className="h-9 w-full text-sm font-semibold text-muted"
         >
           Leave and keep draft
         </button>
@@ -141,7 +146,7 @@ function ExercisePicker({
   onSelect: (id: string) => void
 }) {
   const ref = useRef<HTMLDivElement>(null)
-  const ITEM = 72
+  const ITEM = 104
 
   useEffect(() => {
     const i = entries.findIndex((e) => e.exerciseId === selected)
@@ -149,12 +154,11 @@ function ExercisePicker({
   }, [selected, entries.length]) // not on every set change, or the list jumps back while you scroll it
 
   return (
-    <div className="relative min-h-0">
-      <div className="pointer-events-none absolute inset-x-2 top-1/2 h-[72px] -translate-y-1/2 rounded-2xl bg-surface" />
+    <div className="relative min-h-0 w-[104px] shrink-0">
       <div
         ref={ref}
-        className="wheel no-scrollbar relative flex h-full flex-col"
-        style={{ maskImage: 'linear-gradient(transparent, #000 25%, #000 75%, transparent)' }}
+        className="wheel no-scrollbar flex h-full flex-col"
+        style={{ maskImage: 'linear-gradient(transparent, #000 22%, #000 78%, transparent)' }}
       >
         <div className="shrink-0" style={{ height: `calc(50% - ${ITEM / 2}px)`, scrollSnapAlign: 'none' }} />
         {entries.map((e) => {
@@ -164,23 +168,34 @@ function ExercisePicker({
             <button
               key={e.exerciseId}
               onClick={() => onSelect(e.exerciseId)}
-              className={`no-select flex shrink-0 items-center gap-2 pl-4 pr-3 text-left transition-colors ${on ? 'text-text' : 'text-muted'}`}
+              className="no-select flex shrink-0 flex-col items-center justify-center gap-1.5"
               style={{ height: ITEM }}
             >
-              <span className={`text-2xl transition-transform ${on ? 'scale-110' : ''}`}>{ex?.emoji ?? '❔'}</span>
-              <span className={`line-clamp-2 flex-1 text-sm leading-tight ${e.done ? 'line-through decoration-faint' : ''}`}>
-                {ex?.name ?? 'Deleted exercise'}
+              <span
+                className={`relative grid h-16 w-16 place-items-center rounded-[20px] text-3xl transition-all duration-200 ${
+                  on ? '' : 'scale-90 opacity-60'
+                }`}
+                style={{
+                  background: groupColor(e.exerciseId),
+                  boxShadow: on ? '0 0 0 3px #0d0d0f, 0 0 0 6px #ecebe8' : 'inset 0 -4px 0 rgba(0,0,0,.18)',
+                }}
+              >
+                {ex?.emoji ?? '❔'}
+                {e.done && (
+                  <motion.span
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 600, damping: 15 }}
+                    className="absolute -right-1.5 -bottom-1.5 grid h-[24px] w-[24px] place-items-center rounded-full bg-healthy text-on-pastel"
+                    style={{ border: '3px solid #0d0d0f' }}
+                  >
+                    <Check size={11} weight="bold" />
+                  </motion.span>
+                )}
               </span>
-              {e.done && (
-                <motion.span
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 600, damping: 15 }}
-                  className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-healthy text-on-pastel"
-                >
-                  <Check size={12} weight="bold" />
-                </motion.span>
-              )}
+              <span className={`line-clamp-2 w-24 text-center text-[11px] leading-tight font-extrabold ${on ? 'text-text' : 'text-muted'}`}>
+                {ex?.name ?? 'Deleted'}
+              </span>
             </button>
           )
         })}
@@ -208,59 +223,71 @@ function SetEditor({
   const values = useMemo(() => weightValues(ex.stepSize, unit), [ex.stepSize, unit])
   const setAt = (i: number, patch: Partial<Entry['sets'][number]>) =>
     onChange((e) => ({ ...e, sets: e.sets.map((x, j) => (j === i ? { ...x, ...patch } : x)) }))
+  const last = lastSets(history, ex.id)
+    ?.map((x) => `${fmtWeight(toDisplay(x.weight, unit), ex.bodyweight)}×${x.reps}`)
+    .join(', ')
 
   return (
-    <motion.div initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.2 }} className="pb-4">
-      <div className="mb-2 flex items-center gap-2 pt-1">
-        <span className="text-2xl">{ex.emoji}</span>
-        <h2 className="line-clamp-2 text-lg leading-tight">{ex.name}</h2>
+    <motion.div initial={{ opacity: 0, x: 14 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.24, ease: [0.2, 0.8, 0.2, 1] }} className="pb-4">
+      <div className="flex flex-col gap-1.5 pt-1 pb-3">
+        <span className="chip self-start" style={{ background: groupColor(ex.id) }}>
+          {groupOf(ex.id)}
+        </span>
+        <h2 className="text-[22px] leading-tight">{ex.name}</h2>
+        <span className="text-[13px] font-semibold text-muted">{last ? `Last time: ${last}` : 'First time. Starting from your defaults.'}</span>
       </div>
-      <div className="mb-1 grid grid-cols-[18px_1fr_1fr] gap-1.5 text-center text-xs text-muted">
-        <span />
-        <span>{weightLabel(ex, unit)}</span>
-        <span>reps</span>
-      </div>
-      <div className="space-y-2">
+      <div className="space-y-3">
         {entry.sets.map((set, i) => (
-          <div key={i} className="grid grid-cols-[18px_1fr_1fr] items-center gap-1.5">
-            <span className="tabular text-center text-xs text-muted">{i + 1}</span>
-            <Wheel
-              values={values}
-              value={toDisplay(set.weight, unit)}
-              onChange={(v) => setAt(i, { weight: toKg(v, unit) })}
-              format={(v) => fmtWeight(v, ex.bodyweight)}
-              itemH={36}
-              label={`Set ${i + 1} · ${weightLabel(ex, unit)}`}
-            />
-            <Wheel values={REPS} value={set.reps} onChange={(v) => setAt(i, { reps: v })} format={String} itemH={36} label={`Set ${i + 1} · reps`} />
+          <div key={i}>
+            <div className="mb-1 text-xs font-black">Set {i + 1}</div>
+            <div className="grid grid-cols-2 gap-2">
+              <Wheel
+                values={values}
+                value={toDisplay(set.weight, unit)}
+                onChange={(v) => setAt(i, { weight: toKg(v, unit) })}
+                format={(v) => fmtWeight(v, ex.bodyweight)}
+                itemH={30}
+                caption={weightLabel(ex, unit)}
+                label={`${ex.name} · set ${i + 1} · ${weightLabel(ex, unit)}`}
+              />
+              <Wheel
+                values={REPS}
+                value={set.reps}
+                onChange={(v) => setAt(i, { reps: v })}
+                format={String}
+                itemH={30}
+                caption="reps"
+                label={`${ex.name} · set ${i + 1} · reps`}
+              />
+            </div>
           </div>
         ))}
       </div>
-      <p className="mt-1 text-center text-[11px] text-muted">Hold a number to zoom</p>
-      <div className="mt-2 flex gap-1.5">
+      <p className="mt-2 text-center text-[11px] font-semibold text-muted">Hold a number to zoom</p>
+      <div className="mt-2 flex gap-2">
         <button
           onClick={() => onChange((e) => ({ ...e, sets: [...e.sets, nextSet(history, ex, e)] }))}
-          className="row press flex h-12 flex-1 items-center justify-center gap-1.5 text-sm"
+          className="row chunky flex h-12 flex-1 items-center justify-center gap-1.5 text-sm font-extrabold [--lip:#26262b] [--lip-h:3px]"
         >
-          <Plus size={16} /> Add set
+          <Plus size={16} weight="bold" /> Add set
         </button>
         {entry.sets.length > 1 && (
           <button
             aria-label="Remove last set"
             onClick={() => onChange((e) => ({ ...e, sets: e.sets.slice(0, -1) }))}
-            className="row press grid h-12 w-12 place-items-center text-muted"
+            className="row chunky grid h-12 w-12 place-items-center text-muted [--lip:#26262b] [--lip-h:3px]"
           >
-            <Minus size={16} />
+            <Minus size={16} weight="bold" />
           </button>
         )}
       </div>
       <button
         onClick={() => onDone(!entry.done)}
-        className={`press mt-2 flex h-14 w-full items-center justify-center gap-2 rounded-xl font-[Rubik] font-medium transition-colors ${
-          entry.done ? 'bg-healthy text-on-pastel' : 'bg-surface text-text'
+        className={`chunky mt-2 flex h-16 w-full items-center justify-center gap-2 rounded-[20px] font-display text-lg font-black transition-colors ${
+          entry.done ? 'bg-healthy text-on-pastel [--lip:#8fbf88]' : 'bg-surface text-text [--lip:#26262b]'
         }`}
       >
-        <Check size={18} weight="bold" /> {entry.done ? 'Done' : 'Mark done'}
+        <Check size={20} weight="bold" /> {entry.done ? 'Done' : 'Mark done'}
       </button>
     </motion.div>
   )

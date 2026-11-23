@@ -174,3 +174,17 @@ Every interactive element must visibly respond. Keep all feedback animations **â
 - No pure black `#000` or pure white `#FFF` text in dark mode.
 - No multi-step setup flows when a default would work.
 - No animations slower than 300ms for feedback, no decorative looping motion (except the loading period).
+
+## Project overrides (workout-tower)
+
+Chosen by Vince for this app (his own prototype plus a Duolingo reference). These win over the rules above:
+
+- **Font:** Nunito everywhere (headings 900, labels 800), not Rubik / M PLUS Rounded.
+- **Chunky press:** primary buttons, pastel tiles and the Done button have a solid darker "lip"
+  underneath (`.chunky`, `--lip` color) that squishes away on press, Duolingo style. Rows get a
+  faint inner bottom edge.
+- **Thick progress bars** (`.bar`), sage fill with a light top highlight.
+- **Exercise tiles are colored by muscle group** on the workout screen (push blue, back sage,
+  arms lavender, legs peach, core butter, custom gray). This is a sixth use of pastels, on purpose.
+- **Tower materials** (wood, stone, iron, gold, diamond) are game art with textures and a solid
+  depth face. Not UI chrome.

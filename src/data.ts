@@ -36,7 +36,7 @@ export async function createCustomExercise(e: Pick<Exercise, 'name' | 'emoji' | 
 }
 
 /** Most recent finished sets for an exercise, or undefined. */
-function lastSets(sessions: Session[], exerciseId: string): SetEntry[] | undefined {
+export function lastSets(sessions: Session[], exerciseId: string): SetEntry[] | undefined {
   for (let i = sessions.length - 1; i >= 0; i--) {
     const s = sessions[i]
     if (!s.finished) continue

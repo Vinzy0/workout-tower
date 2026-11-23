@@ -81,3 +81,16 @@ export const LIBRARY: LibraryExercise[] = ITEMS.map(([name, emoji, group, defaul
   defaultReps,
   defaultSets: 3,
 }))
+
+// Pastel per muscle group, used on the workout screen's exercise tiles.
+const GROUP_COLOR: Record<string, string> = {
+  Shoulders: '#BFD3F0',
+  Chest: '#BFD3F0',
+  Back: '#C3DDBF',
+  Arms: '#CFC3F0',
+  Legs: '#F2CDB2',
+  Core: '#EEDC9A',
+}
+const byId = new Map(LIBRARY.map((l) => [l.id, l]))
+export const groupOf = (exerciseId: string) => byId.get(exerciseId)?.group ?? 'Custom'
+export const groupColor = (exerciseId: string) => GROUP_COLOR[groupOf(exerciseId)] ?? '#A9ABAF'

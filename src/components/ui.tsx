@@ -9,7 +9,7 @@ export function TopBar({ title, back = '/', right }: { title?: ReactNode; back?:
       <button aria-label="Back" onClick={() => nav(back)} className="press grid h-11 w-11 place-items-center rounded-xl">
         <CaretLeft size={22} />
       </button>
-      <div className="min-w-0 flex-1 truncate font-[Rubik] text-lg font-medium">{title}</div>
+      <div className="min-w-0 flex-1 truncate font-display text-xl font-black">{title}</div>
       {right}
     </header>
   )

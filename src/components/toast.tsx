@@ -27,7 +27,7 @@ export function Toaster() {
         {t && (
           <motion.div
             key={t.id}
-            className="mt-2 rounded-full bg-text px-4 py-2 font-[Rubik] text-sm font-medium text-bg"
+            className="mt-2 rounded-full bg-text px-4 py-2 font-display text-sm font-extrabold text-bg"
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -20, opacity: 0 }}

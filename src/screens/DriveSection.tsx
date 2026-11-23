@@ -35,10 +35,10 @@ export function DriveSection() {
               'Drive connected',
             )
           }
-          className="press flex w-full items-center gap-3 rounded-[18px] bg-connect p-4 text-left text-on-pastel disabled:opacity-60"
+          className="chunky flex w-full items-center gap-3 rounded-[18px] bg-connect [--lip:#e9a57a] p-4 text-left text-on-pastel disabled:opacity-60"
         >
           <CloudArrowUp size={24} weight="duotone" />
-          <span className="flex-1 font-[Rubik] font-medium">{busy ? 'Connecting…' : 'Connect Google Drive'}</span>
+          <span className="flex-1 font-display font-black">{busy ? 'Connecting…' : 'Connect Google Drive'}</span>
           <span className="chip bg-white/40">Connect ↗</span>
         </button>
       </Section>

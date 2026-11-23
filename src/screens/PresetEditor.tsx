@@ -71,8 +71,8 @@ export function PresetEditor() {
 
       <div className="flex-1 overflow-y-auto px-[18px] pb-4">
         {order.length === 0 ? (
-          <button onClick={() => setLib(true)} className="press mt-4 w-full rounded-[18px] bg-attention p-5 text-left text-on-pastel">
-            <div className="font-[Rubik] text-lg font-medium">Add your exercises</div>
+          <button onClick={() => setLib(true)} className="chunky mt-4 w-full rounded-[18px] bg-attention [--lip:#d9be55] p-5 text-left text-on-pastel">
+            <div className="font-display text-lg font-medium">Add your exercises</div>
             <div className="text-sm opacity-80">Pick from {LIBRARY.length} moves. Takes a few seconds.</div>
           </button>
         ) : (
@@ -106,7 +106,7 @@ export function PresetEditor() {
           </span>
         </button>
         {order.length > 0 && (
-          <button onClick={start} className="btn-primary press h-14 flex-1">
+          <button onClick={start} className="btn-primary chunky h-14 flex-1">
             Start workout
           </button>
         )}
@@ -318,7 +318,7 @@ function LibrarySheet({
           <button
             disabled={picked.length === 0}
             onClick={() => onAdd(picked)}
-            className="btn-primary press mt-2 h-14 w-full shrink-0 disabled:opacity-40"
+            className="btn-primary chunky mt-2 h-14 w-full shrink-0 disabled:opacity-40"
           >
             {picked.length ? `Add ${picked.length} exercise${picked.length > 1 ? 's' : ''}` : 'Tap exercises to pick'}
           </button>
@@ -376,7 +376,7 @@ function CustomForm({
         <button
           disabled={!name.trim()}
           onClick={() => onSave({ name: name.trim(), emoji: emoji.trim() || '💪', stepSize, equipment })}
-          className="btn-primary press h-14 flex-1 disabled:opacity-40"
+          className="btn-primary chunky h-14 flex-1 disabled:opacity-40"
         >
           Save
         </button>

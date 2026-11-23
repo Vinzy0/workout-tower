@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent } from 'react'
 import { createPortal } from 'react-dom'
-import { nearestIndex } from '../core/units'
+import { fmtNum, nearestIndex } from '../core/units'
 import { haptics } from '../platform/haptics'
 
 type Props = {
@@ -15,10 +15,12 @@ type Props = {
   /** Hold to open a full-screen version of this wheel. */
   holdToZoom?: boolean
   label?: string
+  /** Render as a chunky card with this caption inside (e.g. "kg each"). */
+  caption?: string
 }
 
 /** iOS-style scroll wheel: native momentum + scroll-snap, value settles when scrolling stops. */
-export function Wheel({ values, value, onChange, format, itemH = 44, rows = 3, className = '', holdToZoom = true, label }: Props) {
+export function Wheel({ values, value, onChange, format, itemH = 44, rows = 3, className = '', holdToZoom = true, label, caption }: Props) {
   const ref = useRef<HTMLDivElement>(null)
   const idx = nearestIndex(values, value)
   const [active, setActive] = useState(idx)
@@ -56,8 +58,16 @@ export function Wheel({ values, value, onChange, format, itemH = 44, rows = 3, c
 
   const pad = ((rows - 1) / 2) * itemH
   return (
-    <div className={`relative no-select ${className}`} style={{ height: rows * itemH }} {...hold}>
-      <div className="absolute inset-x-0 rounded-xl bg-white/[0.07]" style={{ top: pad, height: itemH }} />
+    <div
+      className={`relative no-select ${caption ? 'row pt-5' : ''} ${className}`}
+      style={{ height: rows * itemH + (caption ? 20 : 0) }}
+      {...hold}
+    >
+      {caption ? (
+        <span className="absolute inset-x-0 top-2 text-center text-[10px] font-extrabold tracking-wide text-muted">{caption}</span>
+      ) : (
+        <div className="absolute inset-x-0 rounded-xl bg-white/[0.07]" style={{ top: pad, height: itemH }} />
+      )}
       <div
         ref={ref}
         onScroll={onScroll}
@@ -71,10 +81,10 @@ export function Wheel({ values, value, onChange, format, itemH = 44, rows = 3, c
           <div
             key={v}
             onClick={() => ref.current?.scrollTo({ top: i * itemH, behavior: 'smooth' })}
-            className={`tabular flex items-center justify-center transition-[color,transform] duration-150 ${
-              i === active ? 'text-text scale-105 font-medium' : 'text-muted'
+            className={`tabular flex items-center justify-center font-display transition-[color,font-size] duration-150 ${
+              i === active ? 'font-black text-text' : 'font-bold text-faint'
             }`}
-            style={{ height: itemH, fontSize: itemH * 0.42 }}
+            style={{ height: itemH, fontSize: itemH * (i === active ? 0.72 : 0.42) }}
           >
             {format(v)}
           </div>
@@ -92,7 +102,9 @@ export function Wheel({ values, value, onChange, format, itemH = 44, rows = 3, c
   )
 }
 
-function BigWheel({ onClose, label, ...p }: Omit<Props, 'holdToZoom'> & { onClose: () => void }) {
+function BigWheel({ onClose, label, ...p }: Omit<Props, 'holdToZoom' | 'caption'> & { onClose: () => void }) {
+  const [start] = useState(p.value)
+  const diff = Math.round((p.value - start) * 100) / 100
   return (
     <motion.div
       className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-bg/95"
@@ -114,9 +126,12 @@ function BigWheel({ onClose, label, ...p }: Omit<Props, 'holdToZoom'> & { onClos
         <span className="absolute left-6 z-10 text-4xl text-attention" aria-hidden>
           ▸
         </span>
-        <Wheel {...p} itemH={96} rows={5} holdToZoom={false} className="mx-auto w-64 [&_.tabular]:font-[Rubik]" />
+        <Wheel {...p} itemH={96} rows={5} holdToZoom={false} className="mx-auto w-64 [&_.tabular]:font-display" />
       </motion.div>
-      <p className="mt-6 text-sm text-muted">Flick to change · tap outside to close</p>
+      <span className={`chip mt-6 px-3 py-1.5 text-sm ${diff > 0 ? 'bg-healthy' : diff < 0 ? 'bg-people' : 'bg-surface text-muted'}`}>
+        {diff === 0 ? 'Same as before' : `${diff > 0 ? '+' : '−'}${fmtNum(Math.abs(diff))}`}
+      </span>
+      <p className="mt-3 text-sm text-muted">Flick to change · tap outside to close</p>
     </motion.div>
   )
 }
