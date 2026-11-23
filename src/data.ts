@@ -29,9 +29,9 @@ export async function addToPreset(presetId: string, ids: string[]) {
   await storage.putPreset({ ...preset, exerciseIds })
 }
 
-export async function createCustomExercise(e: Pick<Exercise, 'name' | 'emoji' | 'stepSize' | 'equipment'>): Promise<string> {
+export async function createCustomExercise(e: Pick<Exercise, 'name' | 'stepSize' | 'equipment'>): Promise<string> {
   const id = newId()
-  await storage.putExercise({ ...e, id, bodyweight: e.equipment === 'bodyweight', defaultWeight: 0, defaultReps: 10, defaultSets: 3, updatedAt: Date.now() })
+  await storage.putExercise({ ...e, id, emoji: '', bodyweight: e.equipment === 'bodyweight', defaultWeight: 0, defaultReps: 10, defaultSets: 3, updatedAt: Date.now() })
   return id
 }
 
@@ -65,8 +65,8 @@ export async function startSession(presetId: string): Promise<string> {
     const ex = await storage.getExercise(id)
     if (!ex) continue
     const last = lastSets(sessions, id)
-    const count = last?.length ?? ex.defaultSets
-    const sets = Array.from({ length: count }, (_, i) => last?.[i] ?? { weight: ex.defaultWeight, reps: ex.defaultReps })
+    // One set at a time: start with set 1 only (last time's set 1, else defaults). "Next set" adds more.
+    const sets = [last?.[0] ?? { weight: ex.defaultWeight, reps: ex.defaultReps }]
     entries.push({ exerciseId: id, sets, done: false })
   }
   const s: Session = { id: newId(), presetId, date: Date.now(), finished: false, entries, updatedAt: Date.now() }

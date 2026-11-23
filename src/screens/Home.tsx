@@ -248,7 +248,7 @@ function TowerView({ tower, fx }: { tower: TowerState; fx: Fx | null }) {
   return (
     <div className="relative min-h-0 flex-1">
       <div className="no-scrollbar h-full overflow-y-auto">
-        <div className="flex min-h-full flex-col justify-end gap-[18px] px-[18px] pb-6 pt-10">
+        <div className="flex min-h-full flex-col justify-end gap-[18px] px-[18px] pt-10">
           {future.map((n, i) => (
             <div key={n}>
               {showBest && n === best && <BestLine best={best} />}
@@ -268,7 +268,7 @@ function TowerView({ tower, fx }: { tower: TowerState; fx: Fx | null }) {
               />
             ))
             .reverse()}
-          <div className="-mt-1 h-3 rounded-full bg-surface" />
+          <Ground start={blocks[0]?.weekStart} />
         </div>
       </div>
       <AnimatePresence>{fx?.collapsed ? <Collapse key="c" n={fx.collapsed} /> : null}</AnimatePresence>
@@ -445,6 +445,26 @@ function Collapse({ n }: { n: number }) {
           transition={{ duration: 1.2, delay: i * 0.06, ease: [0.5, 0, 0.9, 0.5] }}
         />
       ))}
+    </div>
+  )
+}
+
+/** The ground the tower stands on: a grass strip over soil, with when this tower started. */
+function Ground({ start }: { start?: number }) {
+  return (
+    <div className="-mx-[18px] -mt-1">
+      <div className="mx-3 h-3.5 rounded-t-xl bg-[#8FBF88]" style={{ boxShadow: 'inset 0 3px 0 rgba(255,255,255,.28)' }} />
+      <div
+        className="grid h-14 place-items-center bg-[#26211d] text-xs font-extrabold text-[#9a8b7c]"
+        style={{
+          backgroundImage:
+            'radial-gradient(circle at 12% 40%, #3a322b 0 3px, transparent 4px), radial-gradient(circle at 34% 75%, #3a322b 0 2px, transparent 3px), radial-gradient(circle at 70% 35%, #3a322b 0 3px, transparent 4px), radial-gradient(circle at 88% 70%, #3a322b 0 2px, transparent 3px)',
+        }}
+      >
+        {start
+          ? `Tower started ${new Date(start).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`
+          : 'Your tower starts here'}
+      </div>
     </div>
   )
 }

@@ -25,7 +25,6 @@ export function weightValues(step: number, unit: Unit): number[] {
 }
 
 export const REPS = Array.from({ length: 201 }, (_, i) => i)
-export const SETS = Array.from({ length: 10 }, (_, i) => i + 1)
 
 export const fmtNum = (n: number) => String(Math.round(n * 100) / 100)
 

@@ -5,10 +5,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { Sheet } from '../components/Sheet'
 import { Segmented, TopBar } from '../components/ui'
-import { Wheel } from '../components/Wheel'
+import { ExTile } from '../components/ExerciseIcon'
+import { ValueCard } from '../components/ValueCard'
 import { LIBRARY } from '../core/library'
 import { EQUIPMENT, STEP_SIZES, type Equipment, type Exercise, type Preset, type Unit } from '../core/types'
-import { equipmentOf, fmtNum, fmtWeight, REPS, SETS, toDisplay, toKg, weightLabel, weightValues } from '../core/units'
+import { equipmentOf, fmtNum, fmtWeight, REPS, toDisplay, toKg, weightLabel, weightValues } from '../core/units'
 import { addToPreset, createCustomExercise, startSession } from '../data'
 import { haptics } from '../platform/haptics'
 import { storage } from '../platform/storage'
@@ -157,31 +158,38 @@ function ExerciseRow({
           <DotsSixVertical size={20} />
         </button>
         <button onClick={onToggle} className="flex min-w-0 flex-1 items-center gap-3 py-3 pr-4 text-left">
-          <span className="text-2xl">{ex.emoji}</span>
+          <ExTile id={ex.id} ex={ex} size={40} />
           <span className="min-w-0 flex-1">
-            <span className="block truncate">{ex.name}</span>
+            <span className="block truncate font-extrabold">{ex.name}</span>
             <span className="tabular text-xs text-muted">
-              {ex.defaultSets} × {ex.defaultReps} · {w}
-              {ex.bodyweight && w === 'BW' ? '' : ` ${unit}`}
+              {w}
+              {ex.bodyweight && w === 'BW' ? '' : ` ${unit}`} × {ex.defaultReps} to start
             </span>
           </span>
         </button>
       </div>
       {open && (
         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-3 px-3 pb-3">
-          <div className="grid grid-cols-3 gap-2 text-center text-xs text-muted">
-            <div>{weightLabel(ex, unit)}</div>
-            <div>reps</div>
-            <div>sets</div>
-            <Wheel
+          <p className="text-xs font-semibold text-muted">First-time starting values. After that, each set starts from last time.</p>
+          <div className="grid grid-cols-2 gap-2">
+            <ValueCard
               values={values}
               value={toDisplay(ex.defaultWeight, unit)}
               onChange={(v) => put({ defaultWeight: toKg(v, unit) })}
               format={(v) => fmtWeight(v, ex.bodyweight)}
-              label={`${ex.name} · default weight`}
+              caption={weightLabel(ex, unit)}
+              title={`${ex.name} · starting weight`}
+              raised
             />
-            <Wheel values={REPS} value={ex.defaultReps} onChange={(v) => put({ defaultReps: v })} format={String} label="Default reps" />
-            <Wheel values={SETS} value={ex.defaultSets} onChange={(v) => put({ defaultSets: v })} format={String} label="Default sets" />
+            <ValueCard
+              values={REPS}
+              value={ex.defaultReps}
+              onChange={(v) => put({ defaultReps: v })}
+              format={String}
+              caption="reps"
+              title={`${ex.name} · starting reps`}
+              raised
+            />
           </div>
           <div>
             <div className="mb-1 text-xs text-muted">Weight step ({unit})</div>
@@ -288,7 +296,7 @@ function LibrarySheet({
                           onClick={() => toggle(i.id)}
                           className={`row press flex w-full items-center gap-3 px-3 py-2.5 text-left ${added ? 'opacity-40' : ''}`}
                         >
-                          <span className="text-xl">{i.emoji}</span>
+                          <ExTile id={i.id} ex={i} size={36} />
                           <span className="flex-1">
                             {i.name}
                             {equipmentOf(i) !== 'dumbbell' && <span className="ml-2 text-xs text-muted">{equipmentOf(i)}</span>}
@@ -334,11 +342,10 @@ function CustomForm({
   onCancel,
 }: {
   initialName: string
-  onSave: (e: Pick<Exercise, 'name' | 'emoji' | 'stepSize' | 'equipment'>) => void
+  onSave: (e: Pick<Exercise, 'name' | 'stepSize' | 'equipment'>) => void
   onCancel: () => void
 }) {
   const [name, setName] = useState(initialName.trim())
-  const [emoji, setEmoji] = useState('💪')
   const [stepSize, setStep] = useState<(typeof STEP_SIZES)[number]>(2.5)
   const [equipment, setEquipment] = useState<Equipment>('dumbbell')
 
@@ -346,12 +353,6 @@ function CustomForm({
     <div className="space-y-3 pb-2">
       <h2 className="text-xl">Custom exercise</h2>
       <div className="flex gap-2">
-        <input
-          value={emoji}
-          onChange={(e) => setEmoji(e.target.value)}
-          aria-label="Emoji"
-          className="h-12 w-14 rounded-2xl bg-surface text-center text-2xl outline-none"
-        />
         <input
           autoFocus
           value={name}
@@ -375,7 +376,7 @@ function CustomForm({
         </button>
         <button
           disabled={!name.trim()}
-          onClick={() => onSave({ name: name.trim(), emoji: emoji.trim() || '💪', stepSize, equipment })}
+          onClick={() => onSave({ name: name.trim(), stepSize, equipment })}
           className="btn-primary chunky h-14 flex-1 disabled:opacity-40"
         >
           Save

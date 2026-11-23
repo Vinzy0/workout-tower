@@ -2,8 +2,8 @@ import { CalendarCheck, ChartLineUp, Stack, type Icon } from '@phosphor-icons/re
 import { NavLink, Outlet } from 'react-router'
 
 const TABS: { to: string; label: string; Icon: Icon }[] = [
-  { to: '/', label: 'Tower', Icon: Stack },
   { to: '/history', label: 'History', Icon: CalendarCheck },
+  { to: '/', label: 'Tower', Icon: Stack },
   { to: '/stats', label: 'Stats', Icon: ChartLineUp },
 ]
 

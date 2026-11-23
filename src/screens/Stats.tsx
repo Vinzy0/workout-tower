@@ -3,7 +3,8 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { LineChart } from '../components/LineChart'
-import { ExTile, Segmented, TopBar } from '../components/ui'
+import { ExTile } from '../components/ExerciseIcon'
+import { Segmented, TopBar } from '../components/ui'
 import { liftHistory, type LiftPoint } from '../core/stats'
 import type { Exercise, Unit } from '../core/types'
 import { fmtNum, toDisplay } from '../core/units'
@@ -48,7 +49,7 @@ export function Stats() {
           const diff = Math.round((last - first) * 100) / 100
           return (
             <button key={id} onClick={() => nav(`/stats/${id}`)} className="row press flex w-full items-center gap-3 p-3 text-left">
-              <ExTile id={id} emoji={ex?.emoji} />
+              <ExTile id={id} ex={ex} />
               <div className="min-w-0 flex-1">
                 <div className="truncate font-extrabold">{ex?.name ?? 'Deleted exercise'}</div>
                 <div className="truncate text-xs font-semibold text-muted">
@@ -87,7 +88,7 @@ export function LiftStats() {
 
   return (
     <div className="flex h-full flex-col">
-      <TopBar back="/stats" title={ex?.name ?? 'Lift'} right={<span className="mr-3">{ex && <ExTile id={id} emoji={ex.emoji} size={36} />}</span>} />
+      <TopBar back="/stats" title={ex?.name ?? 'Lift'} right={<span className="mr-3">{ex && <ExTile id={id} ex={ex} size={36} />}</span>} />
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-[18px] pb-4">
         <Segmented options={METRICS} value={m} onChange={setMetric} />
         <div className="row p-3 pt-4">

@@ -1,5 +1,6 @@
+import { Trash } from '@phosphor-icons/react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ExTile } from '../components/ui'
+import { ExTile } from '../components/ExerciseIcon'
 import { performed } from '../core/stats'
 import type { Exercise, SetEntry, Unit } from '../core/types'
 import { fmtWeight, toDisplay } from '../core/units'
@@ -39,13 +40,23 @@ export function History() {
                 <h2 className="text-xl">{d.toLocaleDateString(undefined, { weekday: 'long' })}</h2>
                 <span className="text-sm font-bold text-muted">{d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
                 <span className="ml-auto truncate text-sm font-bold text-muted">{presets.find((p) => p.id === s.presetId)?.name}</span>
+                <button
+                  aria-label="Delete this workout"
+                  onClick={() => {
+                    if (confirm(`Delete the ${d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })} workout? Your tower and stats update.`))
+                      storage.deleteSession(s.id)
+                  }}
+                  className="press -my-2 -mr-2 grid h-10 w-10 shrink-0 place-items-center self-center rounded-xl text-muted"
+                >
+                  <Trash size={18} />
+                </button>
               </div>
               <div className="space-y-3">
                 {performed(s).map((e) => {
                   const ex = byId.get(e.exerciseId)
                   return (
                     <div key={e.exerciseId} className="flex gap-3">
-                      <ExTile id={e.exerciseId} emoji={ex?.emoji} />
+                      <ExTile id={e.exerciseId} ex={ex} />
                       <div className="min-w-0 flex-1">
                         <div className="truncate font-extrabold">{ex?.name ?? 'Deleted exercise'}</div>
                         <div className="mt-1 flex flex-wrap gap-1">
